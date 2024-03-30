@@ -1,7 +1,7 @@
 from elasticsearch import NotFoundError
 
-from src.api.db.cache import AbstractModelCache
-from src.api.db.elastic import ApiElasticClient
+from src.api.cache import AbstractModelCache
+from src.api.db import AbstractDBClient
 
 
 class BaseElasticService:
@@ -9,10 +9,10 @@ class BaseElasticService:
         self,
         cache: AbstractModelCache,
         cache_ex: int,
-        elastic_client: ApiElasticClient,
+        db: AbstractDBClient,
     ):
         self._cache = cache
-        self._elastic_client = elastic_client
+        self._db = db
         self._cache_ex = cache_ex
 
     async def _get_data_from_elastic(

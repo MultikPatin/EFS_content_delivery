@@ -4,9 +4,9 @@ from elastic_transport import ConnectionError
 from elasticsearch import NotFoundError
 from fastapi import Depends
 
+from src.api.cache.redis import RedisCache, get_redis
 from src.api.core.config import settings
-from src.api.db.cache.redis import RedisCache, get_redis
-from src.api.db.elastic import ApiElasticClient, get_api_elastic_client
+from src.api.db.elastic import ElasticDB, get_elastic
 from src.api.models.db.genre import Genre
 from src.api.services.base import BaseElasticService
 
@@ -64,10 +64,10 @@ class GenreService(BaseElasticService):
 @lru_cache
 def get_genre_service(
     cache: RedisCache = Depends(get_redis),
-    elastic_client: ApiElasticClient = Depends(get_api_elastic_client),
+    db: ElasticDB = Depends(get_elastic),
 ) -> GenreService:
     return GenreService(
         cache=cache,
         cache_ex=settings.cache_ex_for_films,
-        elastic_client=elastic_client,
+        db=db,
     )
