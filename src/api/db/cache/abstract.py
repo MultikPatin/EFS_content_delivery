@@ -1,12 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar
 
 from pydantic import BaseModel
 
-ModelType = TypeVar("ModelType", bound=BaseModel)
 
-
-class AbstractCache(ABC):
+class AbstractModelCache(ABC):
     """
     Abstract base class for caching.
 
@@ -17,7 +14,7 @@ class AbstractCache(ABC):
     async def set_one_model(
         self,
         key: str,
-        value: ModelType,
+        value: BaseModel,
         cache_expire: int,
     ) -> None:
         """
@@ -31,7 +28,9 @@ class AbstractCache(ABC):
         pass
 
     @abstractmethod
-    async def get_one_model(self, key: str, model) -> ModelType | None:
+    async def get_one_model(
+        self, key: str, model: type[BaseModel]
+    ) -> BaseModel | None:
         """
         Get a single model from the cache.
 
@@ -48,7 +47,7 @@ class AbstractCache(ABC):
     async def set_list_model(
         self,
         key: str,
-        values: list[ModelType],
+        values: list[BaseModel],
         cache_expire: int,
     ) -> None:
         """
@@ -62,7 +61,7 @@ class AbstractCache(ABC):
         pass
 
     @abstractmethod
-    async def get_list_model(self, key: str, model) -> list[ModelType] | None:
+    async def get_list_model(self, key: str, model) -> list[BaseModel] | None:
         """
         Get a list of models from the cache.
 

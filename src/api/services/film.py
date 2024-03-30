@@ -5,8 +5,8 @@ from elasticsearch import NotFoundError
 from fastapi import Depends
 
 from src.api.core.config import settings
+from src.api.db.cache.redis import RedisCache, get_redis
 from src.api.db.elastic import ApiElasticClient, get_api_elastic_client
-from src.api.db.redis import ApiRedisClient, get_redis
 from src.api.models.db.film import Film
 from src.api.services.base import BaseElasticService
 
@@ -16,45 +16,45 @@ class FilmService(BaseElasticService):
     __index = "movies"
 
     async def get_by_id(self, film_id: str) -> Film | None:
-        key = self._redis.build_redis_key(self.__key_prefix, film_id)
-        film = await self._redis.get_one_model(key, Film)
+        key = self._cache.build_key(self.__key_prefix, film_id)
+        film = await self._cache.get_one_model(key, Film)
         if not film:
             film = await self.__get_film_from_elastic(film_id)
             if not film:
                 return None
-            await self._redis.set_one_model(key, film, self._cache_ex)
+            await self._cache.set_one_model(key, film, self._cache_ex)
         return film
 
     async def get_films(
         self, page_number: int, page_size: int, genre_uuid: str, sort: str
     ) -> list[Film] | None:
-        key = self._redis.build_redis_key(
+        key = self._cache.build_key(
             self.__key_prefix, page_number, page_size, genre_uuid, sort
         )
-        films = await self._redis.get_list_model(key, Film)
+        films = await self._cache.get_list_model(key, Film)
         if not films:
             films = await self._get_films_from_elastic(
                 page_number, page_size, genre_uuid, sort
             )
             if not films:
                 return None
-            await self._redis.set_list_model(key, films, self._cache_ex)
+            await self._cache.set_list_model(key, films, self._cache_ex)
         return films
 
     async def get_search(
         self, page_number: int, page_size: int, query: str
     ) -> list[Film] | None:
-        key = self._redis.build_redis_key(
+        key = self._cache.build_key(
             self.__key_prefix, page_number, page_size, query
         )
-        films = await self._redis.get_list_model(key, Film)
+        films = await self._cache.get_list_model(key, Film)
         if not films:
             films = await self.__get_search_from_elastic(
                 page_number, page_size, query
             )
             if not films:
                 return None
-            await self._redis.set_list_model(key, films, self._cache_ex)
+            await self._cache.set_list_model(key, films, self._cache_ex)
         return films
 
     async def __get_film_from_elastic(self, film_id: str) -> Film | None:
@@ -118,7 +118,11 @@ class FilmService(BaseElasticService):
 
 @lru_cache
 def get_film_service(
-    redis: ApiRedisClient = Depends(get_redis),
+    cache: RedisCache = Depends(get_redis),
     elastic_client: ApiElasticClient = Depends(get_api_elastic_client),
 ) -> FilmService:
-    return FilmService(redis, elastic_client, settings.cache_ex_for_films)
+    return FilmService(
+        cache=cache,
+        cache_ex=settings.cache_ex_for_films,
+        elastic_client=elastic_client,
+    )

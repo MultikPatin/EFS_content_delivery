@@ -3,9 +3,18 @@ from logging import Logger
 from pydantic import BaseModel
 from redis.asyncio import Redis
 
+from src.api.db.cache.abstract import AbstractModelCache
 
-class ApiRedisClient:
-    """Клиент для работы api с Redis."""
+
+class RedisCache(AbstractModelCache):
+    """
+    Клиент для работы api с Redis.
+
+    Args:
+        redis (Redis): объект для работы с Redis
+        logger (Logger): объект для записи в журналы
+
+    """
 
     __redis: Redis
     __logger: Logger
@@ -20,6 +29,15 @@ class ApiRedisClient:
         value: BaseModel,
         cache_expire: int,
     ) -> None:
+        """
+        Записать одну модель в кэш Redis.
+
+        Args:
+            key (str): ключ для записи модели
+            value (BaseModel): модель для записи
+            cache_expire (int): время жизни кэша в секундах
+
+        """
         data = value.model_dump_json()
         try:
             await self.__redis.set(key, data, cache_expire)
@@ -29,7 +47,20 @@ class ApiRedisClient:
             )
             raise
 
-    async def get_one_model(self, key: str, model) -> BaseModel | None:
+    async def get_one_model(
+        self, key: str, model: type[BaseModel]
+    ) -> BaseModel | None:
+        """
+        Получить одну модель из кэша Redis.
+
+        Args:
+            key (str): ключ для получения модели
+            model (BaseModel): модель для десериализации
+
+        Returns:
+            BaseModel | None: возвращает одну модель или None, если модель не найдена
+
+        """
         try:
             value = await self.__redis.get(key)
             if not value:
@@ -48,6 +79,15 @@ class ApiRedisClient:
         values: list[BaseModel],
         cache_expire: int,
     ) -> None:
+        """
+        Записать список моделей в кэш Redis.
+
+        Args:
+            key (str): ключ для записи списка моделей
+            values (list[BaseModel]): список моделей для записи
+            cache_expire (int): время жизни кэша в секундах
+
+        """
         try:
             for value in values:
                 await self.__redis.lpush(key, value.model_dump_json())
@@ -58,7 +98,20 @@ class ApiRedisClient:
             )
             raise
 
-    async def get_list_model(self, key: str, model) -> list[BaseModel] | None:
+    async def get_list_model(
+        self, key: str, model: type[BaseModel]
+    ) -> list[BaseModel] | None:
+        """
+        Получить список моделей из кэша Redis.
+
+        Args:
+            key (str): ключ для получения списка моделей
+            model (BaseModel): модель для десериализации
+
+        Returns:
+            list[BaseModel] | None: возвращает список моделей или None, если список не найден
+
+        """
         try:
             list_count = await self.__redis.llen(key)
             end = 0 - list_count
@@ -75,7 +128,18 @@ class ApiRedisClient:
             data.append(model.model_validate_json(value))
         return data
 
-    def build_redis_key(self, key_prefix: str, *args) -> str:
+    def build_key(self, key_prefix: str, *args) -> str:
+        """
+        Создать ключ для кэша Redis.
+
+        Args:
+            key_prefix (str): префикс ключа
+            *args: аргументы для создания ключа
+
+        Returns:
+            str: созданный ключ
+
+        """
         if not key_prefix:
             self.__logger.error("Key prefix value is required")
             raise
@@ -87,13 +151,26 @@ class ApiRedisClient:
             raise
         return f"{key_prefix}-{key}"
 
-    async def close(self):
+    async def close(self) -> None:
+        """
+        Закрыть соединение с Redis.
+
+        """
         await self.__redis.aclose()
         self.__logger.info("Connection to Redis was closed.")
 
+    async def ping(self) -> bool:
+        """
+        Ping the Redis server to ensure the connection is still alive.
 
-api_redis_client: ApiRedisClient | None = None
+        Returns:
+            bool: True if the ping was successful, False if it failed.
+        """
+        return await self.__redis.ping()
 
 
-async def get_redis() -> ApiRedisClient:
-    return api_redis_client
+redis: RedisCache | None = None
+
+
+async def get_redis() -> RedisCache:
+    return redis
