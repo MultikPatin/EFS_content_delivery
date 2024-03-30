@@ -20,7 +20,6 @@ COPY ./src/core/__init__.py ./src/core/__init__.py
 COPY ./src/core/configs/__init__.py ./src/core/configs/__init__.py
 COPY ./src/core/configs/elastic.py ./src/core/configs/elastic.py
 COPY ./src/core/configs/redis.py ./src/core/configs/redis.py
-COPY ./src/core/db ./src/core/db
 COPY ./src/core/utils ./src/core/utils
 
 RUN chmod +x ${APP_DIR}/entrypoint.sh
