@@ -20,25 +20,34 @@ class PersonService(BaseElasticService):
         key = self._cache.build_key(self.__key_prefix, person_id)
         person = await self._cache.get_one_model(key, Person)
         if not person:
-            person = await self.__get_person_from_elastic(person_id)
+            person = await self._db.get_by_id(
+                obj_id=person_id, index=self.__index
+            )
             if not person:
                 return None
+            person = Person(**person)
             await self._cache.set_one_model(key, person, self._cache_ex)
         return person
 
     async def get_search(
         self, page_number: int, page_size: int, query: str
     ) -> list[Person] | None:
+        field = "full_name"
         key = self._cache.build_key(
             self.__key_prefix, page_number, page_size, query
         )
         persons = await self._cache.get_list_model(key, Person)
         if not persons:
-            persons = await self.__get_search_from_elastic(
-                page_number, page_size, query
+            persons = await self._db.get_search_by_query(
+                page_number=page_number,
+                page_size=page_size,
+                field=field,
+                query=query,
+                index=self.__index,
             )
             if not persons:
                 return None
+            persons = [Person(**person["_source"]) for person in persons]
             await self._cache.set_list_model(key, persons, self._cache_ex)
         return persons
 
@@ -53,41 +62,17 @@ class PersonService(BaseElasticService):
         )
         films = await self._cache.get_list_model(key, Film)
         if not films:
-            films = await self.__get_person_films_from_elastic(person_id)
+            person = await self._db.get_by_id(
+                obj_id=person_id, index=self.__index
+            )
+            if not person:
+                return None
+            films = person.get("films")
             if not films:
                 return None
+            films = [Film(**film) for film in films]
             await self._cache.set_list_model(key, films, self._cache_ex)
         return films
-
-    async def __get_person_from_elastic(self, person_id: str) -> Person | None:
-        doc = await self._get_data_from_elastic(self.__index, person_id)
-        if doc:
-            return Person(**doc)
-        return None
-
-    async def __get_search_from_elastic(
-        self,
-        page_number: int,
-        page_size: int,
-        query: str,
-    ) -> list[Person] | None:
-        field = "full_name"
-        docs = await self._get_search_from_elastic(
-            self.__index, page_number, page_size, field, query
-        )
-
-        if docs:
-            return [Person(**doc["_source"]) for doc in docs]
-        return None
-
-    async def __get_person_films_from_elastic(
-        self, person_id: str
-    ) -> list[Film] | None:
-        docs = await self._get_data_from_elastic(self.__index, person_id)
-        if not docs:
-            return None
-
-        return [Film(**film) for film in docs["films"]]
 
 
 @lru_cache

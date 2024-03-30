@@ -13,6 +13,7 @@ class AbstractDBClient(ABC):
 
         Args:
             obj_id (str): The ID of the object to retrieve.
+            **kwargs: Additional arguments to pass to the database.
 
         Returns:
             dict | None: The object with the given ID, or None if no object was found.
@@ -29,7 +30,7 @@ class AbstractDBClient(ABC):
         Args:
             page_number (int): The page number to retrieve.
             page_size (int): The number of objects to retrieve per page.
-            *args: Additional arguments to pass to the database.
+            **kwargs: Additional arguments to pass to the database.
 
         Returns:
             list[dict] | None: A list of objects, or None if no objects were found.
@@ -48,6 +49,7 @@ class AbstractDBClient(ABC):
             page_size (int): The number of objects to retrieve per page.
             field (str): The field to search by.
             query (str): The search query.
+            **kwargs: Additional arguments to pass to the database.
 
         Returns:
             list[dict] | None: A list of objects that match the search query, or None if no objects were found.
