@@ -2,9 +2,8 @@ from logging import Logger
 from typing import Any
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
-from pydantic import BaseModel
 
-from src.api.db.abstract import AbstractDBClient
+from src.api.db.abstract import AbstractBaseModel, AbstractDBClient
 
 
 class ElasticDB(AbstractDBClient):
@@ -24,17 +23,17 @@ class ElasticDB(AbstractDBClient):
         self.__logger = logger
 
     async def get_by_id(
-        self, obj_id: str, model: type[BaseModel], **kwargs: Any
-    ) -> BaseModel | None | Any:
+        self, obj_id: str, model: type[AbstractBaseModel], **kwargs: Any
+    ) -> AbstractBaseModel | None | Any:
         """Получить объект по его идентификатору.
 
         Args:
             obj_id (str): идентификатор объекта
-            model (BaseModel): модель для выдачи
+            model (AbstractBaseModel): модель для выдачи
             **kwargs: дополнительные параметры запроса
 
         Returns:
-            dict | None: возвращает объект в формате JSON или None, если объект не найден
+            AbstractBaseModel | None: возвращает объект в формате JSON или None, если объект не найден
         """
         index = kwargs.get("index")
         if not index:
@@ -50,19 +49,19 @@ class ElasticDB(AbstractDBClient):
         self,
         page_number: int,
         page_size: int,
-        model: type[BaseModel],
+        model: type[AbstractBaseModel],
         **kwargs: Any,
-    ) -> list[BaseModel] | None:
+    ) -> list[AbstractBaseModel] | None:
         """Получить все объекты.
 
         Args:
             page_number (int): номер страницы
             page_size (int): количество объектов на странице
-            model (BaseModel): модель для десериализации
+            model (AbstractBaseModel): модель для десериализации
             **kwargs: дополнительные параметры запроса
 
         Returns:
-            list[dict] | None: возвращает список объектов в формате JSON или None, если объектов нет
+            list[AbstractBaseModel] | None: возвращает список объектов в формате JSON или None, если объектов нет
         """
         index = kwargs.get("index")
         if not index:
@@ -87,9 +86,9 @@ class ElasticDB(AbstractDBClient):
         page_size: int,
         field: str,
         query: str | None,
-        model: type[BaseModel],
+        model: type[AbstractBaseModel],
         **kwargs: Any,
-    ) -> list[BaseModel] | None:
+    ) -> list[AbstractBaseModel] | None:
         """Получить объекты по поисковому запросу.
 
         Args:
@@ -97,11 +96,11 @@ class ElasticDB(AbstractDBClient):
             page_size (int): количество объектов на странице
             field (str): имя поля для поиска
             query (str): поисковый запрос
-            model (BaseModel): модель для десериализации
+            model (AbstractBaseModel): модель для десериализации
             **kwargs: дополнительные параметры запроса
 
         Returns:
-            list[dict] | None: возвращает список объектов в формате JSON или None, если объектов нет
+            list[AbstractBaseModel] | None: возвращает список объектов в формате JSON или None, если объектов нет
         """
         index = kwargs.get("index")
         if not index:

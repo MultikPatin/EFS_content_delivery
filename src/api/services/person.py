@@ -9,9 +9,7 @@ from src.api.models.db.person import FilmForPersonDB, PersonDB
 from src.api.services.base import BaseElasticService
 
 
-class PersonService(
-    BaseElasticService,
-):
+class PersonService(BaseElasticService[PersonDB]):
     _key_prefix = "PersonService"
     _index = "persons"
 

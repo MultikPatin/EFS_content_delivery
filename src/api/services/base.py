@@ -1,10 +1,14 @@
+from typing import Generic, TypeVar
+
 from pydantic import BaseModel
 
 from src.api.cache.abstract import AbstractModelCache
 from src.api.db.abstract import AbstractDBClient
 
+ModelDB = TypeVar("ModelDB", bound=BaseModel)
 
-class BaseElasticService:
+
+class BaseElasticService(Generic[ModelDB]):
     _key_prefix: str
     _index: str
 
@@ -19,8 +23,8 @@ class BaseElasticService:
         self._cache_ex = cache_ex
 
     async def _get_by_id(
-        self, obj_id: str, model: type[BaseModel]
-    ) -> BaseModel | None:
+        self, obj_id: str, model: type[ModelDB]
+    ) -> ModelDB | None:
         key = self._cache.build_key(self._key_prefix, obj_id)
         doc = await self._cache.get_one_model(key, model)
         if not doc:
@@ -38,8 +42,8 @@ class BaseElasticService:
         page_size: int,
         query: str | None,
         field: str,
-        model: type[BaseModel],
-    ) -> list[BaseModel] | None:
+        model: type[ModelDB],
+    ) -> list[ModelDB] | None:
         key = self._cache.build_key(
             self._key_prefix, page_number, page_size, query
         )

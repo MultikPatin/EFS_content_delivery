@@ -1,10 +1,9 @@
 from logging import Logger
 from typing import Any
 
-from pydantic import BaseModel
 from redis.asyncio import Redis
 
-from src.api.cache.abstract import AbstractModelCache
+from src.api.cache.abstract import AbstractBaseModel, AbstractModelCache
 
 
 class RedisCache(AbstractModelCache):
@@ -27,7 +26,7 @@ class RedisCache(AbstractModelCache):
     async def set_one_model(
         self,
         key: str,
-        value: BaseModel,
+        value: AbstractBaseModel,
         cache_expire: int,
     ) -> None:
         """
@@ -35,7 +34,7 @@ class RedisCache(AbstractModelCache):
 
         Args:
             key (str): ключ для записи модели
-            value (BaseModel): модель для записи
+            value (AbstractBaseModel): модель для записи
             cache_expire (int): время жизни кэша в секундах
 
         """
@@ -52,17 +51,17 @@ class RedisCache(AbstractModelCache):
             raise
 
     async def get_one_model(
-        self, key: str, model: type[BaseModel]
-    ) -> BaseModel | None:
+        self, key: str, model: type[AbstractBaseModel]
+    ) -> AbstractBaseModel | None:
         """
         Получить одну модель из кэша Redis.
 
         Args:
             key (str): ключ для получения модели
-            model (BaseModel): модель для десериализации
+            model (AbstractBaseModel): модель для десериализации
 
         Returns:
-            BaseModel | None: возвращает одну модель или None, если модель не найдена
+            AbstractBaseModel | None: возвращает одну модель или None, если модель не найдена
 
         """
         try:
@@ -80,7 +79,7 @@ class RedisCache(AbstractModelCache):
     async def set_list_model(
         self,
         key: str,
-        values: list[BaseModel],
+        values: list[AbstractBaseModel],
         cache_expire: int,
     ) -> None:
         """
@@ -88,7 +87,7 @@ class RedisCache(AbstractModelCache):
 
         Args:
             key (str): ключ для записи списка моделей
-            values (list[BaseModel]): список моделей для записи
+            values (list[AbstractBaseModel]): список моделей для записи
             cache_expire (int): время жизни кэша в секундах
 
         """
@@ -106,17 +105,17 @@ class RedisCache(AbstractModelCache):
             raise
 
     async def get_list_model(
-        self, key: str, model: type[BaseModel]
-    ) -> list[BaseModel] | None:
+        self, key: str, model: type[AbstractBaseModel]
+    ) -> list[AbstractBaseModel] | None:
         """
         Получить список моделей из кэша Redis.
 
         Args:
             key (str): ключ для получения списка моделей
-            model (BaseModel): модель для десериализации
+            model (AbstractBaseModel): модель для десериализации
 
         Returns:
-            list[BaseModel] | None: возвращает список моделей или None, если список не найден
+            list[AbstractBaseModel] | None: возвращает список моделей или None, если список не найден
 
         """
         try:
