@@ -1,6 +1,8 @@
 from logging import Logger
+from typing import Any
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
+from pydantic import BaseModel
 
 from src.api.db import AbstractDBClient
 
@@ -21,38 +23,46 @@ class ElasticDB(AbstractDBClient):
         self.__es = es
         self.__logger = logger
 
-    async def get_by_id(self, obj_id: str, **kwargs) -> dict | None:
+    async def get_by_id(
+        self, obj_id: str, model: type[BaseModel], **kwargs
+    ) -> BaseModel | None | Any:
         """Получить объект по его идентификатору.
 
         Args:
             obj_id (str): идентификатор объекта
+            model (BaseModel): модель для выдачи
             **kwargs: дополнительные параметры запроса
 
         Returns:
             dict | None: возвращает объект в формате JSON или None, если объект не найден
         """
         index = kwargs.get("index")
+        if not index:
+            return None
         await self.__validate_index(index)
         try:
-            data = await self.__es.get(index=index, id=obj_id)
+            doc = await self.__es.get(index=index, id=obj_id)
         except (NotFoundError, ConnectionError):
             return None
-        return data["_source"]
+        return model(**doc["_source"])
 
     async def get_all(
-        self, page_number: int, page_size: int, **kwargs
-    ) -> list[dict] | None:
+        self, page_number: int, page_size: int, model: type[BaseModel], **kwargs
+    ) -> list[BaseModel] | None:
         """Получить все объекты.
 
         Args:
             page_number (int): номер страницы
             page_size (int): количество объектов на странице
+            model (BaseModel): модель для десериализации
             **kwargs: дополнительные параметры запроса
 
         Returns:
             list[dict] | None: возвращает список объектов в формате JSON или None, если объектов нет
         """
         index = kwargs.get("index")
+        if not index:
+            return None
         await self.__validate_index(index)
         try:
             docs = await self.__es.search(
@@ -65,11 +75,17 @@ class ElasticDB(AbstractDBClient):
             )
         except (NotFoundError, ConnectionError):
             return None
-        return docs["hits"]["hits"]
+        return [model(**doc["_source"]) for doc in docs["hits"]["hits"]]
 
     async def get_search_by_query(
-        self, page_number: int, page_size: int, field: str, query: str, **kwargs
-    ) -> list[dict] | None:
+        self,
+        page_number: int,
+        page_size: int,
+        field: str,
+        query: str | None,
+        model: type[BaseModel],
+        **kwargs,
+    ) -> list[BaseModel] | None:
         """Получить объекты по поисковому запросу.
 
         Args:
@@ -77,12 +93,15 @@ class ElasticDB(AbstractDBClient):
             page_size (int): количество объектов на странице
             field (str): имя поля для поиска
             query (str): поисковый запрос
+            model (BaseModel): модель для десериализации
             **kwargs: дополнительные параметры запроса
 
         Returns:
             list[dict] | None: возвращает список объектов в формате JSON или None, если объектов нет
         """
         index = kwargs.get("index")
+        if not index:
+            return None
         await self.__validate_index(index)
         if query:
             body = {"match": {field: {"query": query, "fuzziness": "auto"}}}
@@ -101,9 +120,9 @@ class ElasticDB(AbstractDBClient):
             return None
         if not docs:
             return None
-        return docs["hits"]["hits"]
+        return [model(**doc["_source"]) for doc in docs["hits"]["hits"]]
 
-    async def __validate_index(self, index: str):
+    async def __validate_index(self, index: str | None):
         """Проверить, что индекс существует.
 
         Args:
@@ -134,5 +153,5 @@ class ElasticDB(AbstractDBClient):
 elastic: ElasticDB | None = None
 
 
-async def get_elastic() -> ElasticDB:
+async def get_elastic() -> ElasticDB | None:
     return elastic

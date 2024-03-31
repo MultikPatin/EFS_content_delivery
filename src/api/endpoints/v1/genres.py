@@ -38,7 +38,6 @@ async def genre_details(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="genre not found"
         )
-
     return Genre(uuid=genre.uuid, name=genre.name)
 
 

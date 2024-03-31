@@ -165,7 +165,7 @@ class RedisCache(AbstractModelCache):
         await self.__redis.aclose()
         self.__logger.info("Connection to Redis was closed.")
 
-    async def ping(self) -> bool:
+    async def ping(self):
         """
         Ping the Redis server to ensure the connection is still alive.
 
@@ -178,5 +178,5 @@ class RedisCache(AbstractModelCache):
 redis: RedisCache | None = None
 
 
-async def get_redis() -> RedisCache:
+async def get_redis() -> RedisCache | None:
     return redis

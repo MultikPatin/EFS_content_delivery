@@ -42,7 +42,6 @@ async def person_details(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="person not found"
         )
-
     return Person(
         uuid=person.uuid,
         full_name=person.full_name,
@@ -58,7 +57,7 @@ async def person_details(
     response_model=list[Person],
     summary="Get a list of persons based on a search query",
 )
-async def persons_search(
+async def persons_search_by_full_name(
     page_number: Annotated[
         int,
         Query(
@@ -99,7 +98,10 @@ async def persons_search(
     Raises:
         HTTPException: If the persons are not found.
     """
-    persons = await person_service.get_search(page_number, page_size, query)
+    field = "full_name"
+    persons = await person_service.get_search(
+        page_number, page_size, query, field
+    )
     if not persons:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="persons not found"

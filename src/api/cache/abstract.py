@@ -22,7 +22,7 @@ class AbstractModelCache(ABC):
 
         Args:
             key (str): The key to use for caching the model.
-            value (ModelType): The model to cache.
+            value (BaseModel): The model to cache.
             cache_expire (int): The number of seconds until the model expires.
         """
         pass
@@ -36,7 +36,7 @@ class AbstractModelCache(ABC):
 
         Args:
             key (str): The key used for caching the model.
-            model (ModelType): The model class to cast the cached value to.
+            model (BaseModel): The model class to cast the cached value to.
 
         Returns:
             The cached model, or None if the model is not in the cache.
@@ -55,7 +55,7 @@ class AbstractModelCache(ABC):
 
         Args:
             key (str): The key to use for caching the list of models.
-            values (list[ModelType]): The list of models to cache.
+            values (list[BaseModel]): The list of models to cache.
             cache_expire (int): The number of seconds until the list of models expires.
         """
         pass
@@ -67,7 +67,7 @@ class AbstractModelCache(ABC):
 
         Args:
             key (str): The key used for caching the list of models.
-            model (ModelType): The model class to cast the cached values to.
+            model (BaseModel): The model class to cast the cached values to.
 
         Returns:
             The cached list of models, or None if the list of models is not in the cache.

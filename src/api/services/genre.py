@@ -18,11 +18,10 @@ class GenreService(BaseElasticService):
         genre = await self._cache.get_one_model(key, Genre)
         if not genre:
             genre = await self._db.get_by_id(
-                obj_id=genre_id, index=self.__index
+                obj_id=genre_id, model=Genre, index=self.__index
             )
             if not genre:
                 return None
-            genre = Genre(**genre)
             await self._cache.set_one_model(key, genre, self._cache_ex)
         return genre
 
@@ -33,11 +32,13 @@ class GenreService(BaseElasticService):
         genres = await self._cache.get_list_model(key, Genre)
         if not genres:
             genres = await self._db.get_all(
-                page_number=page_number, page_size=page_size, index=self.__index
+                page_number=page_number,
+                page_size=page_size,
+                model=Genre,
+                index=self.__index,
             )
             if not genres:
                 return None
-            genres = [Genre(**genre["_source"]) for genre in genres]
             await self._cache.set_list_model(key, genres, self._cache_ex)
         return genres
 
