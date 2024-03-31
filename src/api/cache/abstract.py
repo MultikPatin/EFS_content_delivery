@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -61,7 +62,9 @@ class AbstractModelCache(ABC):
         pass
 
     @abstractmethod
-    async def get_list_model(self, key: str, model) -> list[BaseModel] | None:
+    async def get_list_model(
+        self, key: str, model: type[BaseModel]
+    ) -> list[BaseModel] | None:
         """
         Get a list of models from the cache.
 
@@ -75,7 +78,7 @@ class AbstractModelCache(ABC):
         pass
 
     @abstractmethod
-    def build_key(self, key_prefix: str, *args) -> str:
+    def build_key(self, key_prefix: str, *args: Any) -> str:
         """
         Build a cache key.
 

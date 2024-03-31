@@ -1,23 +1,14 @@
-from pydantic import BaseModel
+from src.api.models.base import FilmMixin, UUIDMixin
 
 
-class FilmMixin(BaseModel):
-    uuid: str
-
-    class Meta:
-        abstract = True
-
-
-class FilmForPerson(FilmMixin):
+class FilmForPerson(UUIDMixin):
     roles: list[str] | None
 
 
-class Person(BaseModel):
-    uuid: str
+class Person(UUIDMixin):
     full_name: str
     films: list[FilmForPerson] | None
 
 
 class FilmForFilms(FilmMixin):
-    title: str
-    imdb_rating: float | None
+    pass

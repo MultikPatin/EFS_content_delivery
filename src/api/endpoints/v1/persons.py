@@ -3,9 +3,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
+from src.api.core.utils import build_films_field
 from src.api.models.api.v1.person import (
     FilmForFilms,
-    FilmForPerson,
     Person,
 )
 from src.api.services.person import PersonService, get_person_service
@@ -45,10 +45,7 @@ async def person_details(
     return Person(
         uuid=person.uuid,
         full_name=person.full_name,
-        films=[
-            FilmForPerson(uuid=film.uuid, roles=film.roles)
-            for film in person.films
-        ],
+        films=build_films_field(person),
     )
 
 
@@ -110,10 +107,7 @@ async def persons_search_by_full_name(
         Person(
             uuid=person.uuid,
             full_name=person.full_name,
-            films=[
-                FilmForPerson(uuid=film.uuid, roles=film.roles)
-                for film in person.films
-            ],
+            films=build_films_field(person),
         )
         for person in persons
     ]

@@ -1,12 +1,8 @@
-from pydantic import BaseModel
-
-from src.api.cache import AbstractModelCache
-from src.api.db import AbstractDBClient
+from src.api.cache.abstract import AbstractModelCache
+from src.api.db.abstract import AbstractDBClient
 
 
 class BaseElasticService:
-    _base_model: BaseModel = BaseModel()
-
     def __init__(
         self,
         cache: AbstractModelCache,

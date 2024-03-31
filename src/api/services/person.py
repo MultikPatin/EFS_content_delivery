@@ -5,7 +5,7 @@ from fastapi import Depends
 from src.api.cache.redis import RedisCache, get_redis
 from src.api.core.config import settings
 from src.api.db.elastic import ElasticDB, get_elastic
-from src.api.models.db.person import Film, Person
+from src.api.models.db.person import FilmForPersonDB, PersonDB
 from src.api.services.base import BaseElasticService
 
 
@@ -15,12 +15,12 @@ class PersonService(
     __key_prefix = "PersonService"
     __index = "persons"
 
-    async def get_by_id(self, person_id: str) -> Person | None:
+    async def get_by_id(self, person_id: str) -> PersonDB | None:
         key = self._cache.build_key(self.__key_prefix, person_id)
-        person = await self._cache.get_one_model(key, Person)
+        person = await self._cache.get_one_model(key, PersonDB)
         if not person:
             person = await self._db.get_by_id(
-                obj_id=person_id, model=Person, index=self.__index
+                obj_id=person_id, model=PersonDB, index=self.__index
             )
             if not person:
                 return None
@@ -29,18 +29,18 @@ class PersonService(
 
     async def get_search(
         self, page_number: int, page_size: int, query: str | None, field: str
-    ) -> list[Person] | None:
+    ) -> list[PersonDB] | None:
         key = self._cache.build_key(
             self.__key_prefix, page_number, page_size, query
         )
-        persons = await self._cache.get_list_model(key, Person)
+        persons = await self._cache.get_list_model(key, PersonDB)
         if not persons:
             persons = await self._db.get_search_by_query(
                 page_number=page_number,
                 page_size=page_size,
                 field=field,
                 query=query,
-                model=Person,
+                model=PersonDB,
                 index=self.__index,
             )
             if not persons:
@@ -51,13 +51,13 @@ class PersonService(
     async def get_person_films(
         self,
         person_id: str,
-    ) -> list[Film] | None:
+    ) -> list[FilmForPersonDB] | None:
         self.__key_prefix += "_films"
         key = self._cache.build_key(self.__key_prefix, person_id)
-        films = await self._cache.get_list_model(key, Film)
+        films = await self._cache.get_list_model(key, FilmForPersonDB)
         if not films:
             person = await self._db.get_by_id(
-                obj_id=person_id, model=Person, index=self.__index
+                obj_id=person_id, model=PersonDB, index=self.__index
             )
             if not person:
                 return None

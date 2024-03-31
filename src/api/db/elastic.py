@@ -4,7 +4,7 @@ from typing import Any
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from pydantic import BaseModel
 
-from src.api.db import AbstractDBClient
+from src.api.db.abstract import AbstractDBClient
 
 
 class ElasticDB(AbstractDBClient):
@@ -24,7 +24,7 @@ class ElasticDB(AbstractDBClient):
         self.__logger = logger
 
     async def get_by_id(
-        self, obj_id: str, model: type[BaseModel], **kwargs
+        self, obj_id: str, model: type[BaseModel], **kwargs: Any
     ) -> BaseModel | None | Any:
         """Получить объект по его идентификатору.
 
@@ -47,7 +47,11 @@ class ElasticDB(AbstractDBClient):
         return model(**doc["_source"])
 
     async def get_all(
-        self, page_number: int, page_size: int, model: type[BaseModel], **kwargs
+        self,
+        page_number: int,
+        page_size: int,
+        model: type[BaseModel],
+        **kwargs: Any,
     ) -> list[BaseModel] | None:
         """Получить все объекты.
 
@@ -84,7 +88,7 @@ class ElasticDB(AbstractDBClient):
         field: str,
         query: str | None,
         model: type[BaseModel],
-        **kwargs,
+        **kwargs: Any,
     ) -> list[BaseModel] | None:
         """Получить объекты по поисковому запросу.
 
@@ -122,7 +126,7 @@ class ElasticDB(AbstractDBClient):
             return None
         return [model(**doc["_source"]) for doc in docs["hits"]["hits"]]
 
-    async def __validate_index(self, index: str | None):
+    async def __validate_index(self, index: str | None) -> str | None:
         """Проверить, что индекс существует.
 
         Args:
@@ -136,7 +140,7 @@ class ElasticDB(AbstractDBClient):
         """
         return index
 
-    async def close(self):
+    async def close(self) -> None:
         """Закрыть соединение с Elastic."""
         await self.__es.close()
         self.__logger.info("Connection to Elastic was closed.")

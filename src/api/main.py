@@ -1,5 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
+from typing import Any
 
 import uvicorn
 from elasticsearch import AsyncElasticsearch
@@ -15,7 +16,7 @@ from src.core.utils.logger import create_logger
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> Any:
     redis.redis = redis.RedisCache(
         Redis(host=settings.redis.host, port=settings.redis.port),
         logger=create_logger("API RedisCache"),

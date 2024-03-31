@@ -5,7 +5,7 @@ from fastapi import Depends
 from src.api.cache.redis import RedisCache, get_redis
 from src.api.core.config import settings
 from src.api.db.elastic import ElasticDB, get_elastic
-from src.api.models.db.genre import Genre
+from src.api.models.db.genre import GenreDB
 from src.api.services.base import BaseElasticService
 
 
@@ -13,12 +13,12 @@ class GenreService(BaseElasticService):
     __key_prefix = "GenreService"
     __index = "genres"
 
-    async def get_by_id(self, genre_id: str) -> Genre | None:
+    async def get_by_id(self, genre_id: str) -> GenreDB | None:
         key = self._cache.build_key(self.__key_prefix, genre_id)
-        genre = await self._cache.get_one_model(key, Genre)
+        genre = await self._cache.get_one_model(key, GenreDB)
         if not genre:
             genre = await self._db.get_by_id(
-                obj_id=genre_id, model=Genre, index=self.__index
+                obj_id=genre_id, model=GenreDB, index=self.__index
             )
             if not genre:
                 return None
@@ -27,14 +27,14 @@ class GenreService(BaseElasticService):
 
     async def get_genres(
         self, page_number: int, page_size: int
-    ) -> list[Genre] | None:
+    ) -> list[GenreDB] | None:
         key = self._cache.build_key(self.__key_prefix, page_number, page_size)
-        genres = await self._cache.get_list_model(key, Genre)
+        genres = await self._cache.get_list_model(key, GenreDB)
         if not genres:
             genres = await self._db.get_all(
                 page_number=page_number,
                 page_size=page_size,
-                model=Genre,
+                model=GenreDB,
                 index=self.__index,
             )
             if not genres:

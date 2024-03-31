@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -10,7 +11,7 @@ class AbstractDBClient(ABC):
 
     @abstractmethod
     async def get_by_id(
-        self, obj_id: str, model: type[BaseModel], **kwargs
+        self, obj_id: str, model: type[BaseModel], **kwargs: Any
     ) -> BaseModel | None:
         """
         Retrieve an object by its ID.
@@ -27,7 +28,11 @@ class AbstractDBClient(ABC):
 
     @abstractmethod
     async def get_all(
-        self, page_number: int, page_size: int, model: type[BaseModel], **kwargs
+        self,
+        page_number: int,
+        page_size: int,
+        model: type[BaseModel],
+        **kwargs: Any,
     ) -> list[BaseModel] | None:
         """
         Retrieve a list of all objects.
@@ -51,7 +56,7 @@ class AbstractDBClient(ABC):
         field: str,
         query: str | None,
         model: type[BaseModel],
-        **kwargs,
+        **kwargs: Any,
     ) -> list[BaseModel] | None:
         """
         Retrieve a list of objects that match a search query.

@@ -1,4 +1,5 @@
 from logging import Logger
+from typing import Any
 
 from pydantic import BaseModel
 from redis.asyncio import Redis
@@ -134,7 +135,7 @@ class RedisCache(AbstractModelCache):
             data.append(model.model_validate_json(value))
         return data
 
-    def build_key(self, key_prefix: str, *args) -> str:
+    def build_key(self, key_prefix: str, *args: Any) -> str:
         """
         Создать ключ для кэша Redis.
 
@@ -165,7 +166,7 @@ class RedisCache(AbstractModelCache):
         await self.__redis.aclose()
         self.__logger.info("Connection to Redis was closed.")
 
-    async def ping(self):
+    async def ping(self) -> Any:
         """
         Ping the Redis server to ensure the connection is still alive.
 
