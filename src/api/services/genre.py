@@ -10,32 +10,26 @@ from src.api.services.base import BaseElasticService
 
 
 class GenreService(BaseElasticService):
-    __key_prefix = "GenreService"
-    __index = "genres"
+    _key_prefix = "GenreService"
+    _index = "genres"
 
     async def get_by_id(self, genre_id: str) -> GenreDB | None:
-        key = self._cache.build_key(self.__key_prefix, genre_id)
-        genre = await self._cache.get_one_model(key, GenreDB)
-        if not genre:
-            genre = await self._db.get_by_id(
-                obj_id=genre_id, model=GenreDB, index=self.__index
-            )
-            if not genre:
-                return None
-            await self._cache.set_one_model(key, genre, self._cache_ex)
-        return genre
+        return await self._get_by_id(
+            obj_id=genre_id,
+            model=GenreDB,
+        )
 
     async def get_genres(
         self, page_number: int, page_size: int
     ) -> list[GenreDB] | None:
-        key = self._cache.build_key(self.__key_prefix, page_number, page_size)
+        key = self._cache.build_key(self._key_prefix, page_number, page_size)
         genres = await self._cache.get_list_model(key, GenreDB)
         if not genres:
             genres = await self._db.get_all(
                 page_number=page_number,
                 page_size=page_size,
                 model=GenreDB,
-                index=self.__index,
+                index=self._index,
             )
             if not genres:
                 return None

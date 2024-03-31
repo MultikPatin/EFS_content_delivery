@@ -10,20 +10,14 @@ from src.api.services.base import BaseElasticService
 
 
 class FilmService(BaseElasticService):
-    __key_prefix = "FilmService"
-    __index = "movies"
+    _key_prefix = "FilmService"
+    _index = "movies"
 
     async def get_by_id(self, film_id: str) -> FilmDB | None:
-        key = self._cache.build_key(self.__key_prefix, film_id)
-        film = await self._cache.get_one_model(key, FilmDB)
-        if not film:
-            film = await self._db.get_by_id(
-                obj_id=film_id, model=FilmDB, index=self.__index
-            )
-            if not film:
-                return None
-            await self._cache.set_one_model(key, film, self._cache_ex)
-        return film
+        return await self._get_by_id(
+            obj_id=film_id,
+            model=FilmDB,
+        )
 
     async def get_films(
         self,
@@ -33,7 +27,7 @@ class FilmService(BaseElasticService):
         sort: str | None,
     ) -> list[FilmDB] | None:
         key = self._cache.build_key(
-            self.__key_prefix, page_number, page_size, genre_uuid, sort
+            self._key_prefix, page_number, page_size, genre_uuid, sort
         )
         films = await self._cache.get_list_model(key, FilmDB)
         if not films:
@@ -48,23 +42,13 @@ class FilmService(BaseElasticService):
     async def get_search(
         self, page_number: int, page_size: int, query: str | None, field: str
     ) -> list[FilmDB] | None:
-        key = self._cache.build_key(
-            self.__key_prefix, page_number, page_size, query
+        return await self._get_search(
+            page_number=page_number,
+            page_size=page_size,
+            query=query,
+            field=field,
+            model=FilmDB,
         )
-        films = await self._cache.get_list_model(key, FilmDB)
-        if not films:
-            films = await self._db.get_search_by_query(
-                page_number=page_number,
-                page_size=page_size,
-                field=field,
-                query=query,
-                model=FilmDB,
-                index=self.__index,
-            )
-            if not films:
-                return None
-            await self._cache.set_list_model(key, films, self._cache_ex)
-        return films
 
     async def __get_films_from_elastic(
         self,
@@ -96,7 +80,7 @@ class FilmService(BaseElasticService):
             page_number=page_number,
             page_size=page_size,
             model=FilmDB,
-            index=self.__index,
+            index=self._index,
             filter_path="hits.hits._source",
             query=query,
             sort=sort,
