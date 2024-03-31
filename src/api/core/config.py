@@ -3,8 +3,7 @@ from logging import config as logging_config
 
 from dotenv.main import find_dotenv, load_dotenv
 from pydantic.fields import Field
-from pydantic_settings import BaseSettings
-from pydantic_settings.main import SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.api.core.logger import LOGGING
 from src.core.configs.elastic import ElasticSettings

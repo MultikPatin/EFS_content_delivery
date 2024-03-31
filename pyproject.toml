@@ -16,7 +16,6 @@ uvicorn = { version = "^0.28.0", optional = true }
 redis = { version = "^5.0.3", optional = true }
 gunicorn = {version = "^21.2.0", optional = true}
 
-
 [tool.poetry.extras]
 api = [
     "elasticsearch",
@@ -105,35 +104,3 @@ target-version = "py311"
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = 60
-
-[tool.mypy]
-python_version = "3.11"
-warn_return_any = true
-warn_unused_configs = true
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".git-rewrite",
-    ".hg",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".pytype",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "tests",
-    "dist",
-    "node_modules",
-    "venv",
-    "*/settings.py",
-    "*/migrations/",
-    "tasks",
-]

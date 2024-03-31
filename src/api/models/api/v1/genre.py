@@ -1,6 +1,5 @@
-from pydantic import BaseModel
+from src.api.models.base import UUIDMixin
 
 
-class Genre(BaseModel):
-    uuid: str
+class Genre(UUIDMixin):
     name: str

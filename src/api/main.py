@@ -1,33 +1,33 @@
 import logging
 from contextlib import asynccontextmanager
+from typing import Any
 
 import uvicorn
 from elasticsearch import AsyncElasticsearch
 from fastapi import FastAPI
 from redis.asyncio import Redis
 
+from src.api.cache import redis
 from src.api.core.config import settings
 from src.api.core.logger import LOGGING
 from src.api.db import elastic
-from src.api.db.cache import redis
-from src.api.db.cache.redis import RedisCache
-from src.api.db.elastic import ApiElasticClient
 from src.api.endpoints.v1 import films, genres, persons
 from src.core.utils.logger import create_logger
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    redis.redis = RedisCache(
+async def lifespan(app: FastAPI) -> Any:
+    redis.redis = redis.RedisCache(
         Redis(host=settings.redis.host, port=settings.redis.port),
-        logger=create_logger("API RedisClient"),
+        logger=create_logger("API RedisCache"),
     )
-    elastic.es = ApiElasticClient(
-        async_client=AsyncElasticsearch(hosts=settings.elastic.get_host),
+    elastic.elastic = elastic.ElasticDB(
+        AsyncElasticsearch(hosts=settings.elastic.get_host),
+        logger=create_logger("API ElasticDB"),
     )
     yield
     await redis.redis.close()
-    await elastic.es.close()
+    await elastic.elastic.close()
 
 
 app = FastAPI(

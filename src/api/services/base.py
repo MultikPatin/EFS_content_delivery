@@ -1,61 +1,59 @@
-from elasticsearch import NotFoundError
+from pydantic import BaseModel
 
-from src.api.db.cache import AbstractModelCache
-from src.api.db.elastic import ApiElasticClient
+from src.api.cache.abstract import AbstractModelCache
+from src.api.db.abstract import AbstractDBClient
 
 
 class BaseElasticService:
+    _key_prefix: str
+    _index: str
+
     def __init__(
         self,
         cache: AbstractModelCache,
         cache_ex: int,
-        elastic_client: ApiElasticClient,
+        db: AbstractDBClient,
     ):
         self._cache = cache
-        self._elastic_client = elastic_client
+        self._db = db
         self._cache_ex = cache_ex
 
-    async def _get_data_from_elastic(
-        self, index: str, doc_id: str
-    ) -> dict | None:
-        try:
-            data = await self._elastic_client.get_async_client().get(
-                index=index, id=doc_id
+    async def _get_by_id(
+        self, obj_id: str, model: type[BaseModel]
+    ) -> BaseModel | None:
+        key = self._cache.build_key(self._key_prefix, obj_id)
+        doc = await self._cache.get_one_model(key, model)
+        if not doc:
+            doc = await self._db.get_by_id(
+                obj_id=obj_id, model=model, index=self._index
             )
-        except NotFoundError:
-            return None
-        return data["_source"]
-
-    async def _get_search_from_elastic(
-        self,
-        index: str,
-        page_number: int,
-        page_size: int,
-        field: str,
-        query: str,
-    ) -> list[dict] | None:
-        body = None
-        if query:
-            body = {"match": {field: {"query": query, "fuzziness": "auto"}}}
-        try:
-            docs = await self._elastic_client.get_async_client().search(
-                index=index,
-                filter_path="hits.hits._source",
-                query=body,
-                from_=page_number,
-                size=page_size,
-            )
-
-            if not docs:
+            if not doc:
                 return None
-        except (NotFoundError, ConnectionError):
-            return None
-        return docs["hits"]["hits"]
+            await self._cache.set_one_model(key, doc, self._cache_ex)
+        return doc
 
-    @staticmethod
-    def _get_paginated_data(
-        response,
+    async def _get_search(
+        self,
         page_number: int,
         page_size: int,
-    ):
-        return response[(page_number - 1) * page_size : page_number * page_size]
+        query: str | None,
+        field: str,
+        model: type[BaseModel],
+    ) -> list[BaseModel] | None:
+        key = self._cache.build_key(
+            self._key_prefix, page_number, page_size, query
+        )
+        persons = await self._cache.get_list_model(key, model)
+        if not persons:
+            persons = await self._db.get_search_by_query(
+                page_number=page_number,
+                page_size=page_size,
+                field=field,
+                query=query,
+                model=model,
+                index=self._index,
+            )
+            if not persons:
+                return None
+            await self._cache.set_list_model(key, persons, self._cache_ex)
+        return persons

@@ -2,101 +2,63 @@ from functools import lru_cache
 
 from fastapi import Depends
 
+from src.api.cache.redis import RedisCache, get_redis
 from src.api.core.config import settings
-from src.api.db.cache.redis import RedisCache, get_redis
-from src.api.db.elastic import ApiElasticClient, get_api_elastic_client
-from src.api.models.db.person import (
-    Film,
-    Person,
-)
+from src.api.db.elastic import ElasticDB, get_elastic
+from src.api.models.db.person import FilmForPersonDB, PersonDB
 from src.api.services.base import BaseElasticService
 
 
-class PersonService(BaseElasticService):
-    __key_prefix = "PersonService"
-    __index = "persons"
+class PersonService(
+    BaseElasticService,
+):
+    _key_prefix = "PersonService"
+    _index = "persons"
 
-    async def get_by_id(self, person_id: str) -> Person | None:
-        key = self._cache.build_key(self.__key_prefix, person_id)
-        person = await self._cache.get_one_model(key, Person)
-        if not person:
-            person = await self.__get_person_from_elastic(person_id)
-            if not person:
-                return None
-            await self._cache.set_one_model(key, person, self._cache_ex)
-        return person
+    async def get_by_id(self, person_id: str) -> PersonDB | None:
+        return await self._get_by_id(
+            obj_id=person_id,
+            model=PersonDB,
+        )
 
     async def get_search(
-        self, page_number: int, page_size: int, query: str
-    ) -> list[Person] | None:
-        key = self._cache.build_key(
-            self.__key_prefix, page_number, page_size, query
+        self, page_number: int, page_size: int, query: str | None, field: str
+    ) -> list[PersonDB] | None:
+        return await self._get_search(
+            page_number=page_number,
+            page_size=page_size,
+            query=query,
+            field=field,
+            model=PersonDB,
         )
-        persons = await self._cache.get_list_model(key, Person)
-        if not persons:
-            persons = await self.__get_search_from_elastic(
-                page_number, page_size, query
-            )
-            if not persons:
-                return None
-            await self._cache.set_list_model(key, persons, self._cache_ex)
-        return persons
 
     async def get_person_films(
         self,
         person_id: str,
-    ) -> list[Film] | None:
-        self.__key_prefix += "_films"
-        key = self._cache.build_key(
-            self.__key_prefix,
-            person_id,
-        )
-        films = await self._cache.get_list_model(key, Film)
+    ) -> list[FilmForPersonDB] | None:
+        self._key_prefix += "_films"
+        key = self._cache.build_key(self._key_prefix, person_id)
+        films = await self._cache.get_list_model(key, FilmForPersonDB)
         if not films:
-            films = await self.__get_person_films_from_elastic(person_id)
+            person = await self._db.get_by_id(
+                obj_id=person_id, model=PersonDB, index=self._index
+            )
+            if not person:
+                return None
+            films = person.films
             if not films:
                 return None
             await self._cache.set_list_model(key, films, self._cache_ex)
         return films
 
-    async def __get_person_from_elastic(self, person_id: str) -> Person | None:
-        doc = await self._get_data_from_elastic(self.__index, person_id)
-        if doc:
-            return Person(**doc)
-        return None
-
-    async def __get_search_from_elastic(
-        self,
-        page_number: int,
-        page_size: int,
-        query: str,
-    ) -> list[Person] | None:
-        field = "full_name"
-        docs = await self._get_search_from_elastic(
-            self.__index, page_number, page_size, field, query
-        )
-
-        if docs:
-            return [Person(**doc["_source"]) for doc in docs]
-        return None
-
-    async def __get_person_films_from_elastic(
-        self, person_id: str
-    ) -> list[Film] | None:
-        docs = await self._get_data_from_elastic(self.__index, person_id)
-        if not docs:
-            return None
-
-        return [Film(**film) for film in docs["films"]]
-
 
 @lru_cache
 def get_person_service(
     cache: RedisCache = Depends(get_redis),
-    elastic_client: ApiElasticClient = Depends(get_api_elastic_client),
+    db: ElasticDB = Depends(get_elastic),
 ) -> PersonService:
     return PersonService(
         cache=cache,
         cache_ex=settings.cache_ex_for_films,
-        elastic_client=elastic_client,
+        db=db,
     )

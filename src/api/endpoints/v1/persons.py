@@ -3,9 +3,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
+from src.api.core.utils import build_films_field
 from src.api.models.api.v1.person import (
     FilmForFilms,
-    FilmForPerson,
     Person,
 )
 from src.api.services.person import PersonService, get_person_service
@@ -42,14 +42,10 @@ async def person_details(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="person not found"
         )
-
     return Person(
         uuid=person.uuid,
         full_name=person.full_name,
-        films=[
-            FilmForPerson(uuid=film.uuid, roles=film.roles)
-            for film in person.films
-        ],
+        films=build_films_field(person),
     )
 
 
@@ -58,7 +54,7 @@ async def person_details(
     response_model=list[Person],
     summary="Get a list of persons based on a search query",
 )
-async def persons_search(
+async def persons_search_by_full_name(
     page_number: Annotated[
         int,
         Query(
@@ -99,7 +95,10 @@ async def persons_search(
     Raises:
         HTTPException: If the persons are not found.
     """
-    persons = await person_service.get_search(page_number, page_size, query)
+    field = "full_name"
+    persons = await person_service.get_search(
+        page_number, page_size, query, field
+    )
     if not persons:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="persons not found"
@@ -108,10 +107,7 @@ async def persons_search(
         Person(
             uuid=person.uuid,
             full_name=person.full_name,
-            films=[
-                FilmForPerson(uuid=film.uuid, roles=film.roles)
-                for film in person.films
-            ],
+            films=build_films_field(person),
         )
         for person in persons
     ]

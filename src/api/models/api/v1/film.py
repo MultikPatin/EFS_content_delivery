@@ -1,21 +1,9 @@
-from pydantic import BaseModel
+from src.api.models.base import FilmFullMixin, FilmMixin
 
 
-class FilmMixin(BaseModel):
-    uuid: str
-    title: str
-    imdb_rating: float | None
-
-    class Meta:
-        abstract = True
+class Film(FilmFullMixin):
+    pass
 
 
-class Film(FilmMixin):
-    description: str | None
-    genre: list | None
-    directors: list | None
-    actors: list | None
-    writers: list | None
-
-
-class FilmForFilmsList(FilmMixin): ...
+class FilmForFilmsList(FilmMixin):
+    pass

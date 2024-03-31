@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -22,7 +23,7 @@ class AbstractModelCache(ABC):
 
         Args:
             key (str): The key to use for caching the model.
-            value (ModelType): The model to cache.
+            value (BaseModel): The model to cache.
             cache_expire (int): The number of seconds until the model expires.
         """
         pass
@@ -36,7 +37,7 @@ class AbstractModelCache(ABC):
 
         Args:
             key (str): The key used for caching the model.
-            model (ModelType): The model class to cast the cached value to.
+            model (BaseModel): The model class to cast the cached value to.
 
         Returns:
             The cached model, or None if the model is not in the cache.
@@ -55,19 +56,21 @@ class AbstractModelCache(ABC):
 
         Args:
             key (str): The key to use for caching the list of models.
-            values (list[ModelType]): The list of models to cache.
+            values (list[BaseModel]): The list of models to cache.
             cache_expire (int): The number of seconds until the list of models expires.
         """
         pass
 
     @abstractmethod
-    async def get_list_model(self, key: str, model) -> list[BaseModel] | None:
+    async def get_list_model(
+        self, key: str, model: type[BaseModel]
+    ) -> list[BaseModel] | None:
         """
         Get a list of models from the cache.
 
         Args:
             key (str): The key used for caching the list of models.
-            model (ModelType): The model class to cast the cached values to.
+            model (BaseModel): The model class to cast the cached values to.
 
         Returns:
             The cached list of models, or None if the list of models is not in the cache.
@@ -75,7 +78,7 @@ class AbstractModelCache(ABC):
         pass
 
     @abstractmethod
-    def build_key(self, key_prefix: str, *args) -> str:
+    def build_key(self, key_prefix: str, *args: Any) -> str:
         """
         Build a cache key.
 

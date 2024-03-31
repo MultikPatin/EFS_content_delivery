@@ -1,9 +1,10 @@
 from logging import Logger
+from typing import Any
 
 from pydantic import BaseModel
 from redis.asyncio import Redis
 
-from src.api.db.cache.abstract import AbstractModelCache
+from src.api.cache.abstract import AbstractModelCache
 
 
 class RedisCache(AbstractModelCache):
@@ -43,7 +44,10 @@ class RedisCache(AbstractModelCache):
             await self.__redis.set(key, data, cache_expire)
         except Exception as set_error:
             self.__logger.error(
-                f"Error setting values with key `{key}::{value}`: {set_error}."
+                "Error setting value with key `%s::%s`: %s.",
+                key,
+                value,
+                set_error,
             )
             raise
 
@@ -67,7 +71,7 @@ class RedisCache(AbstractModelCache):
                 return None
         except Exception as get_error:
             self.__logger.error(
-                f"Error getting value with key `{key}`: `{get_error}."
+                "Error getting value with key `%s`: %s.", key, get_error
             )
             raise
         data = model.model_validate_json(value)
@@ -94,7 +98,10 @@ class RedisCache(AbstractModelCache):
             await self.__redis.expire(key, cache_expire)
         except Exception as set_error:
             self.__logger.error(
-                f"Error setting values with key `{key}::{values}`: {set_error}."
+                "Error setting values with key `%s::%s`: %s.",
+                key,
+                values,
+                set_error,
             )
             raise
 
@@ -120,7 +127,7 @@ class RedisCache(AbstractModelCache):
                 return None
         except Exception as get_error:
             self.__logger.error(
-                f"Error getting value with key `{key}`: `{get_error}."
+                "Error getting values with key `%s`: %s.", key, get_error
             )
             raise
         data = []
@@ -128,7 +135,7 @@ class RedisCache(AbstractModelCache):
             data.append(model.model_validate_json(value))
         return data
 
-    def build_key(self, key_prefix: str, *args) -> str:
+    def build_key(self, key_prefix: str, *args: Any) -> str:
         """
         Создать ключ для кэша Redis.
 
@@ -159,7 +166,7 @@ class RedisCache(AbstractModelCache):
         await self.__redis.aclose()
         self.__logger.info("Connection to Redis was closed.")
 
-    async def ping(self) -> bool:
+    async def ping(self) -> Any:
         """
         Ping the Redis server to ensure the connection is still alive.
 
@@ -172,5 +179,5 @@ class RedisCache(AbstractModelCache):
 redis: RedisCache | None = None
 
 
-async def get_redis() -> RedisCache:
+async def get_redis() -> RedisCache | None:
     return redis

@@ -11,9 +11,10 @@ router = APIRouter()
 
 
 class ValidFieldsToSort(str, Enum):
+    empty = None
     rating = "imdb_rating"
     desc_rating = "-imdb_rating"
-    title = "title.raw"
+    asc_title = "title.raw"
     desc_title = "-title.raw"
 
 
@@ -45,7 +46,6 @@ async def film_details(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="film not found"
         )
-
     return Film(
         uuid=film.uuid,
         title=film.title,
@@ -95,7 +95,7 @@ async def films(
             description="The name of the field to sort movies like: imdb_rating (for descending sort needs '-' before sort: -imdb_rating)",
             examples=["title.raw", "imdb_rating"],
         ),
-    ] = None,
+    ] = ValidFieldsToSort.empty,
     film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmForFilmsList]:
     """
@@ -131,7 +131,7 @@ async def films(
     response_model=list[FilmForFilmsList],
     summary="Get a list of films based on a search query",
 )
-async def films_search(
+async def films_search_by_title(
     page_number: Annotated[
         int,
         Query(
@@ -173,7 +173,8 @@ async def films_search(
     Raises:
         HTTPException: If no films are found
     """
-    films = await film_service.get_search(page_number, page_size, query)
+    field = "title"
+    films = await film_service.get_search(page_number, page_size, query, field)
     if not films:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="films not found"
