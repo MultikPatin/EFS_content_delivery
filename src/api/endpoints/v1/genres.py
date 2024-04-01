@@ -18,7 +18,8 @@ async def genre_details(
         str,
         Path(
             title="genre id",
-            description="The UUID of the genre to get like: 6a0a479b-cfec-41ac-b520-41b2b007b611",
+            description="The UUID of the genre to get",
+            example="6a0a479b-cfec-41ac-b520-41b2b007b611",
         ),
     ],
     genre_service: GenreService = Depends(get_genre_service),

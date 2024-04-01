@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
 from src.api.core.utils import (
-    ValidFieldsToSort,
+    FilmFieldsToSort,
     page_number_query,
     page_size_query,
     search_query,
@@ -21,10 +21,8 @@ async def film_details(
         str,
         Path(
             title="film id",
-            description=(
-                "The UUID of the film to get "
-                "like: 8f128d84-dd99-4d0d-a9c8-df11f87ac133"
-            ),
+            description="The UUID of the film to get",
+            example="8f128d84-dd99-4d0d-a9c8-df11f87ac133",
         ),
     ],
     film_service: FilmService = Depends(get_film_service),
@@ -79,16 +77,13 @@ async def films(
         ),
     ] = None,
     sort: Annotated[
-        ValidFieldsToSort,
+        FilmFieldsToSort,
         Query(
             title="Sort field",
-            description=(
-                "The name of the field to sort movies like: imdb_rating <br>"
-                "(for descending sort needs '-' before sort: -imdb_rating)"
-            ),
-            examples=["title.raw", "imdb_rating"],
+            description="The name of the field to sort movies",
+            examples=["-imdb_rating", "imdb_rating", "-title.raw", "title.raw"],
         ),
-    ] = ValidFieldsToSort.desc_rating,
+    ] = FilmFieldsToSort.desc_rating,
     film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmForFilmsList]:
     """

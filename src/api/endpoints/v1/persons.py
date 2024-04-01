@@ -26,7 +26,8 @@ async def person_details(
         str,
         Path(
             title="person id",
-            description="The UUID of the person to get like: b445a536-338c-4e7a-a79d-8f9c2e41ca85",
+            description="The UUID of the person to get",
+            example="b445a536-338c-4e7a-a79d-8f9c2e41ca85",
         ),
     ],
     person_service: PersonService = Depends(get_person_service),
@@ -115,7 +116,8 @@ async def person_details_films(
         str,
         Path(
             title="person id",
-            description="The UUID of the person to get like: b445a536-338c-4e7a-a79d-8f9c2e41ca85",
+            description="The UUID of the person to get",
+            example="b445a536-338c-4e7a-a79d-8f9c2e41ca85",
         ),
     ],
     person_service: PersonService = Depends(get_person_service),

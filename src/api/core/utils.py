@@ -36,7 +36,7 @@ search_query = Query(
 )
 
 
-class ValidFieldsToSort(str, Enum):
+class FilmFieldsToSort(str, Enum):
     rating = "imdb_rating"
     desc_rating = "-imdb_rating"
     asc_title = "title.raw"
