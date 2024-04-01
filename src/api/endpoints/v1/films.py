@@ -1,21 +1,18 @@
-from enum import Enum
 from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
+from src.api.core.utils import (
+    ValidFieldsToSort,
+    page_number_query,
+    page_size_query,
+    search_query,
+)
 from src.api.models.api.v1.film import Film, FilmForFilmsList
 from src.api.services.film import FilmService, get_film_service
 
 router = APIRouter()
-
-
-class ValidFieldsToSort(str, Enum):
-    empty = None
-    rating = "imdb_rating"
-    desc_rating = "-imdb_rating"
-    asc_title = "title.raw"
-    desc_title = "-title.raw"
 
 
 @router.get("/{film_id}", response_model=Film, summary="Get film details by id")
@@ -24,7 +21,10 @@ async def film_details(
         str,
         Path(
             title="film id",
-            description="The UUID of the film to get like: 8f128d84-dd99-4d0d-a9c8-df11f87ac133",
+            description=(
+                "The UUID of the film to get "
+                "like: 8f128d84-dd99-4d0d-a9c8-df11f87ac133"
+            ),
         ),
     ],
     film_service: FilmService = Depends(get_film_service),
@@ -64,21 +64,11 @@ async def film_details(
 async def films(
     page_number: Annotated[
         int,
-        Query(
-            title="Page number",
-            description="The number of the page to get",
-            ge=1,
-            le=10000,
-        ),
+        page_number_query,
     ] = 1,
     page_size: Annotated[
         int,
-        Query(
-            title="Page size",
-            description="The size of the page to get",
-            ge=1,
-            le=10000,
-        ),
+        page_size_query,
     ] = 50,
     genre: Annotated[
         str | None,
@@ -92,10 +82,13 @@ async def films(
         ValidFieldsToSort,
         Query(
             title="Sort field",
-            description="The name of the field to sort movies like: imdb_rating (for descending sort needs '-' before sort: -imdb_rating)",
+            description=(
+                "The name of the field to sort movies like: imdb_rating <br>"
+                "(for descending sort needs '-' before sort: -imdb_rating)"
+            ),
             examples=["title.raw", "imdb_rating"],
         ),
-    ] = ValidFieldsToSort.empty,
+    ] = ValidFieldsToSort.desc_rating,
     film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmForFilmsList]:
     """
@@ -134,28 +127,15 @@ async def films(
 async def films_search_by_title(
     page_number: Annotated[
         int,
-        Query(
-            title="Page number",
-            description="The number of the page to get",
-            ge=1,
-            le=10000,
-        ),
+        page_number_query,
     ] = 1,
     page_size: Annotated[
         int,
-        Query(
-            title="Page size",
-            description="The size of the page to get",
-            ge=1,
-            le=10000,
-        ),
+        page_size_query,
     ] = 50,
     query: Annotated[
         str | None,
-        Query(
-            title="Search query",
-            description="The query to search movies",
-        ),
+        search_query,
     ] = "",
     film_service: FilmService = Depends(get_film_service),
 ) -> list[FilmForFilmsList]:

@@ -1,9 +1,14 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path
 
-from src.api.core.utils import build_films_field
+from src.api.core.utils import (
+    build_films_field,
+    page_number_query,
+    page_size_query,
+    search_query,
+)
 from src.api.models.api.v1.person import (
     FilmForFilms,
     Person,
@@ -57,28 +62,15 @@ async def person_details(
 async def persons_search_by_full_name(
     page_number: Annotated[
         int,
-        Query(
-            title="Page number",
-            description="The number of the page to get",
-            ge=1,
-            le=10000,
-        ),
+        page_number_query,
     ] = 1,
     page_size: Annotated[
         int,
-        Query(
-            title="Page size",
-            description="The size of the page to get",
-            ge=1,
-            le=10000,
-        ),
+        page_size_query,
     ] = 50,
     query: Annotated[
         str | None,
-        Query(
-            title="Search query",
-            description="The query to search persons",
-        ),
+        search_query,
     ] = "",
     person_service: PersonService = Depends(get_person_service),
 ) -> list[Person]:
