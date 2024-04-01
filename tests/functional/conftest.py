@@ -4,6 +4,7 @@ import pytest
 import pytest_asyncio
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.helpers import async_bulk
+import aiohttp
 
 from tests.functional.settings import test_settings
 
@@ -32,7 +33,7 @@ async def es_client():
 
 
 @pytest.fixture
-def es_write_data(es_client):
+def es_write_data(es_client: AsyncElasticsearch):
     async def inner(data: list[dict]):
         bulk_query = get_es_bulk_query(
             data, test_settings.es_index, test_settings.es_id_field
@@ -52,4 +53,21 @@ def es_write_data(es_client):
         if errors:
             raise Exception("Ошибка записи данных в Elasticsearch")
 
+    return inner
+
+@pytest_asyncio.fixture(scope="session")
+async def session():
+    session = aiohttp.ClientSession()
+    yield session
+    await session.close()
+
+@pytest.fixture
+def make_get_request(session):
+    async def inner(path: str, query_data: dict):
+        url = test_settings.service_url + "/api/v1" + path
+        async with session.get(url, params=query_data) as response:
+            body = await response.json()
+            status = response.status
+
+        return body, status
     return inner

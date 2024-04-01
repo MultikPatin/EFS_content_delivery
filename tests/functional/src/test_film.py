@@ -17,7 +17,7 @@ from tests.functional.settings import test_settings
     ],
 )
 @pytest.mark.asyncio
-async def test_search(es_write_data, query_data, expected_answer):
+async def test_search(make_get_request, es_write_data, query_data, expected_answer):
     # 1. Генерируем данные для ES
     es_data = [
         {
@@ -66,19 +66,11 @@ async def test_search(es_write_data, query_data, expected_answer):
 
     # 3. Запрашиваем данные из ES по API
 
-    session = aiohttp.ClientSession()
-    url = test_settings.service_url + "/api/v1/films/search/"
 
-    # query_data = {'query': 'star'}
-    async with session.get(url, params=query_data) as response:
-        body = await response.json()
-
-        # headers = response.headers
-        status = response.status
-    await session.close()
+    response = await make_get_request('/films/search/', query_data)
+    body, status = response
 
     # 4. Проверяем ответ
-    print(f"!!!!!!!!!!!{query_data} -- {expected_answer}")
 
     assert status == expected_answer["status"]
     assert len(body) == expected_answer["length"]
