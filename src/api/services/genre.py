@@ -9,7 +9,7 @@ from src.api.models.db.genre import GenreDB
 from src.api.services.base import BaseElasticService
 
 
-class GenreService(BaseElasticService):
+class GenreService(BaseElasticService[GenreDB]):
     _key_prefix = "GenreService"
     _index = "genres"
 

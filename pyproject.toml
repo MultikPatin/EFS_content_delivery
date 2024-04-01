@@ -31,13 +31,14 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.1.11"
 pre-commit = "^3.6.2"
+mypy = "^1.9.0"
 
 [tool.poetry.group.test]
 optional = true
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.1.1"
-pytest-asyncio = "^0.23.6"
+pytest-asyncio = "0.21.1"
 aiohttp = "^3.9.3"
 
 [build-system]
@@ -104,3 +105,60 @@ target-version = "py311"
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = 60
+
+[tool.mypy]
+python_version = "3.11"
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "tests",
+    "dist",
+    "node_modules",
+    "venv",
+    "*/settings.py",
+    "*/migrations/",
+    "tasks",
+]
+plugins = [
+  "pydantic.mypy"
+]
+
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+
+follow_imports = "silent"
+show_error_codes = true
+
+check_untyped_defs = true
+
+no_implicit_reexport = true
+no_implicit_optional = true
+
+# for strict mypy: (this is the tricky one :-))
+disallow_untyped_defs = true
+disallow_any_generics = true
+disallow_any_unimported = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true

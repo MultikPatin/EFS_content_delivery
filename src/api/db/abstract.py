@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
+
+AbstractBaseModel = TypeVar("AbstractBaseModel", bound=BaseModel)
 
 
 class AbstractDBClient(ABC):
@@ -11,18 +13,18 @@ class AbstractDBClient(ABC):
 
     @abstractmethod
     async def get_by_id(
-        self, obj_id: str, model: type[BaseModel], **kwargs: Any
-    ) -> BaseModel | None:
+        self, obj_id: str, model: type[AbstractBaseModel], **kwargs: Any
+    ) -> AbstractBaseModel | None:
         """
         Retrieve an object by its ID.
 
         Args:
             obj_id (str): The ID of the object to retrieve.
-            model (BaseModel): The model to get.
+            model (AbstractBaseModel): The model to get.
             **kwargs: Additional arguments to pass to the database.
 
         Returns:
-            BaseModel | None: The object with the given ID, or None if no object was found.
+            AbstractBaseModel | None: The object with the given ID, or None if no object was found.
         """
         pass
 
@@ -31,20 +33,20 @@ class AbstractDBClient(ABC):
         self,
         page_number: int,
         page_size: int,
-        model: type[BaseModel],
+        model: type[AbstractBaseModel],
         **kwargs: Any,
-    ) -> list[BaseModel] | None:
+    ) -> list[AbstractBaseModel] | None:
         """
         Retrieve a list of all objects.
 
         Args:
             page_number (int): The page number to retrieve.
             page_size (int): The number of objects to retrieve per page.
-            model (BaseModel): The model to get.
+            model (AbstractBaseModel): The model to get.
             **kwargs: Additional arguments to pass to the database.
 
         Returns:
-            list[BaseModel] | None: A list of objects, or None if no objects were found.
+            list[AbstractBaseModel] | None: A list of objects, or None if no objects were found.
         """
         pass
 
@@ -55,9 +57,9 @@ class AbstractDBClient(ABC):
         page_size: int,
         field: str,
         query: str | None,
-        model: type[BaseModel],
+        model: type[AbstractBaseModel],
         **kwargs: Any,
-    ) -> list[BaseModel] | None:
+    ) -> list[AbstractBaseModel] | None:
         """
         Retrieve a list of objects that match a search query.
 
@@ -66,10 +68,10 @@ class AbstractDBClient(ABC):
             page_size (int): The number of objects to retrieve per page.
             field (str): The field to search by.
             query (str): The search query.
-            model (BaseModel): The model to get.
+            model (AbstractBaseModel): The model to get.
             **kwargs: Additional arguments to pass to the database.
 
         Returns:
-            list[dict] | None: A list of objects that match the search query, or None if no objects were found.
+            list[AbstractBaseModel] | None: A list of objects that match the search query, or None if no objects were found.
         """
         pass
