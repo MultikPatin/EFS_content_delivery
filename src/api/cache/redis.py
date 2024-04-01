@@ -93,7 +93,7 @@ class RedisCache(AbstractModelCache):
         """
         try:
             for value in values:
-                await self.__redis.lpush(key, value.model_dump_json())
+                await self.__redis.lpush(key, value.model_dump_json())  # type: ignore
             await self.__redis.expire(key, cache_expire)
         except Exception as set_error:
             self.__logger.error(
@@ -119,9 +119,9 @@ class RedisCache(AbstractModelCache):
 
         """
         try:
-            list_count = await self.__redis.llen(key)
+            list_count = await self.__redis.llen(key)  # type: ignore
             end = 0 - list_count
-            values = await self.__redis.lrange(key, -1, end)
+            values = await self.__redis.lrange(key, -1, end)  # type: ignore
             if not values:
                 return None
         except Exception as get_error:
