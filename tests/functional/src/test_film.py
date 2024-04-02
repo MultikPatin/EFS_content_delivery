@@ -43,7 +43,7 @@ async def test_by_id(make_get_request, es_write_data, film, expected_answer):
                 "status": 200,
                 "length": len(ids),
                 "field": "imdb_rating",
-                "check_param": 2,
+                "check_param": 1,
             },
         ),
         (
@@ -52,7 +52,7 @@ async def test_by_id(make_get_request, es_write_data, film, expected_answer):
                 "status": 200,
                 "length": len(ids),
                 "field": "imdb_rating",
-                "check_param": 9,
+                "check_param": 10,
             },
         ),
         (
@@ -70,10 +70,10 @@ async def test_by_id(make_get_request, es_write_data, film, expected_answer):
                 "status": 200,
                 "length": len(ids),
                 "field": "title",
-                "check_param": "v" + es_films_data["title"],
+                "check_param": "s" + es_films_data["title"],
             },
         ),
-        ({"sort": "not valid field"}, {"status": 422, "length": 2}),
+        ({"sort": "not valid field"}, {"status": 422, "length": 1}),
         # ({"sort": None}, {"status": 200, "length": len(ids)}), # уже не помню, в каком виде должно возвращать, но должно!
     ],
 )
@@ -81,11 +81,11 @@ async def test_by_id(make_get_request, es_write_data, film, expected_answer):
 async def test_sorted(
     make_get_request, es_write_data, query_data, expected_answer
 ):
-    template = [{"uuid": id} for id in ids]
+    template = [{"uuid": id} for id in ids][:10]
     for id in template:
         id.update(es_films_data)
     # 'adgjmpsvyB'
-    letters_to_sort_by = string.ascii_letters[:30:3]
+    letters_to_sort_by = string.ascii_letters[:20:2]
     for index in range(10):
         template[index]["imdb_rating"] = float(index + 1)
         template[index]["title"] = (
@@ -96,8 +96,8 @@ async def test_sorted(
     response = await make_get_request("/films/", query_data)
     body, status = response
     assert status == expected_answer["status"]
-    ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! expected_answer["length"] - 1
-    assert len(body) == expected_answer["length"] - 1
+
+    assert len(body) == expected_answer["length"]
     if isinstance(body, list):
         for doc in body:
             assert doc.get("uuid") in ids
@@ -108,34 +108,37 @@ async def test_sorted(
 
 
 # test_filtered ПОКА НЕ РАБОТАЕТ, ПРОБЛЕМЫ С API
-# @pytest.mark.parametrize(
-#     "query_data, expected_answer",
-#     [
-#         ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! length for 422 = 1, not 2
-#         ({"genre": id_good}, {"status": 200, "length": 3, "field": "genre", "check_param": id_good}),
-#         ({"genre": id_bad}, {"status": 404, "length": 2}),
-#         ### добавить валидацию uuid на endpoint, поменять статус на 422
-#         ({"genre": id_invalid}, {"status": 422, "length": 2}),
-#     ],
-# )
-# @pytest.mark.asyncio
-# async def test_filtered(make_get_request, es_write_data, query_data, expected_answer):
-#     template = [{"uuid": id} for id in ids]
-#     for id in template:
-#         id.update(es_films_data)
-#     for index in range(expected_answer["length"]):
-#         template[index]["genre"].append(expected_answer["check_param"])
-#     await es_write_data(template, module="films")
+@pytest.mark.parametrize(
+    "query_data, expected_answer",
+    [
+        ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! length for 422 = 1, not 2
+        ({"genre": id_good}, {"status": 200, "length": 3, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
+        # ({"genre": id_bad}, {"status": 404, "length": 1, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
+        # ### добавить валидацию uuid на endpoint, поменять статус на 422
+        # ({"genre": id_invalid}, {"status": 404, "length": 1, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
+    ],
+)
+@pytest.mark.asyncio
+async def test_filtered(make_get_request, es_write_data, query_data, expected_answer):
+    template = [{"uuid": id} for id in ids]
 
-#     response = await make_get_request('/films/', query_data)
-#     body, status = response
-#     assert status == expected_answer["status"]
-#     ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! expected_answer["length"] - 1
-#     assert len(body) == expected_answer["length"] - 1
-#     if isinstance(body, list):
-#         for doc in body:
-#             assert doc.get("uuid") in ids
-#             assert expected_answer["check_param"] in doc.get(expected_answer["field"])
+    for id in template:
+        id.update(es_films_data)
+    for doc in template[:expected_answer["length"]]:
+        doc[expected_answer["field"]] = [expected_answer["check_param"]]
+
+    await es_write_data(template, module="films")
+
+    response = await make_get_request('/films/', query_data)
+    body, status = response
+    assert status == expected_answer["status"]
+
+    assert len(body) == expected_answer["length"]
+    valid_ids = ids[:expected_answer["length"]]
+    if isinstance(body, list):
+        for doc in body:
+            assert doc.get("uuid") in valid_ids
+
 
 
 @pytest.mark.parametrize(
@@ -167,7 +170,7 @@ async def test_paginated(
     response = await make_get_request("/films/", query_data)
     body, status = response
     assert status == expected_answer["status"]
-    ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! expected_answer["length"] - 1
+
     assert len(body) == expected_answer["length"]
     if isinstance(body, list):
         for doc in body:
@@ -176,18 +179,16 @@ async def test_paginated(
         sorted_template_by_imdb_rating_desc = sorted(
             template, key=lambda x: x["imdb_rating"], reverse=True
         )
-        ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! expected_answer["check_param"]-1
         assert sorted_template_by_imdb_rating_desc[
             expected_answer["check_param"]
-        ].get("uuid") == body[expected_answer["check_param"] - 1].get("uuid")
+        ].get("uuid") == body[expected_answer["check_param"]].get("uuid")
 
 
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
         ({"query": "star"}, {"status": 200, "length": len(ids)}),
-        #### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! "length": 2
-        ({"query": "Mashed potato"}, {"status": 404, "length": 2}),
+        ({"query": "Mashed potato"}, {"status": 404, "length": 1}),
     ],
 )
 @pytest.mark.asyncio
@@ -202,8 +203,8 @@ async def test_search(
     response = await make_get_request("/films/search/", query_data)
     body, status = response
     assert status == expected_answer["status"]
-    #### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! expected_answer["length"] - 1
-    assert len(body) == expected_answer["length"] - 1
+
+    assert len(body) == expected_answer["length"]
     if isinstance(body, list):
         for doc in body:
             assert doc.get("uuid") in ids
