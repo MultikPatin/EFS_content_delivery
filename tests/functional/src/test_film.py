@@ -1,9 +1,15 @@
 import pytest
 
-from tests.functional.settings import test_settings
-from tests.functional.testdata.es_data import es_films_data, id_good, id_bad, id_invalid, ids
+from tests.functional.testdata.es_data import (
+    es_films_data,
+    id_good,
+    id_bad,
+    id_invalid,
+    ids,
+)
 
 import string
+
 
 @pytest.mark.parametrize(
     "film, expected_answer",
@@ -16,10 +22,9 @@ import string
 )
 @pytest.mark.asyncio
 async def test_by_id(make_get_request, es_write_data, film, expected_answer):
-    mapping = test_settings.es_index_mapping["films_mapping"]
     template = [{"uuid": id_good}]
     template[0].update(es_films_data)
-    await es_write_data(template, mapping)
+    await es_write_data(template, module="films")
 
     response = await make_get_request(f'/films/{film["film_id"]}')
     body, status = response
@@ -32,17 +37,50 @@ async def test_by_id(make_get_request, es_write_data, film, expected_answer):
     "query_data, expected_answer",
     [
         ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! "sort_char": для imdb_rating должны быть 1 и 10, length for 422 = 1, not 2
-        ({"sort": "imdb_rating"}, {"status": 200, "length": len(ids), "field": "imdb_rating", "check_param": 2}),
-        ({"sort": "-imdb_rating"}, {"status": 200, "length": len(ids), "field": "imdb_rating", "check_param": 9}),
-        ({"sort": "title.raw"}, {"status": 200, "length": len(ids), "field": "title", "check_param": "a" + es_films_data["title"]}),
-        ({"sort": "-title.raw"}, {"status": 200, "length": len(ids), "field": "title", "check_param": "v" + es_films_data["title"]}),
+        (
+            {"sort": "imdb_rating"},
+            {
+                "status": 200,
+                "length": len(ids),
+                "field": "imdb_rating",
+                "check_param": 2,
+            },
+        ),
+        (
+            {"sort": "-imdb_rating"},
+            {
+                "status": 200,
+                "length": len(ids),
+                "field": "imdb_rating",
+                "check_param": 9,
+            },
+        ),
+        (
+            {"sort": "title.raw"},
+            {
+                "status": 200,
+                "length": len(ids),
+                "field": "title",
+                "check_param": "a" + es_films_data["title"],
+            },
+        ),
+        (
+            {"sort": "-title.raw"},
+            {
+                "status": 200,
+                "length": len(ids),
+                "field": "title",
+                "check_param": "v" + es_films_data["title"],
+            },
+        ),
         ({"sort": "not valid field"}, {"status": 422, "length": 2}),
         # ({"sort": None}, {"status": 200, "length": len(ids)}), # уже не помню, в каком виде должно возвращать, но должно!
     ],
 )
 @pytest.mark.asyncio
-async def test_sorted(make_get_request, es_write_data, query_data, expected_answer):
-    mapping = test_settings.es_index_mapping["films_mapping"]
+async def test_sorted(
+    make_get_request, es_write_data, query_data, expected_answer
+):
     template = [{"uuid": id} for id in ids]
     for id in template:
         id.update(es_films_data)
@@ -50,10 +88,12 @@ async def test_sorted(make_get_request, es_write_data, query_data, expected_answ
     letters_to_sort_by = string.ascii_letters[:30:3]
     for index in range(10):
         template[index]["imdb_rating"] = float(index + 1)
-        template[index]["title"] = letters_to_sort_by[index] + template[index]["title"]
-    await es_write_data(template, mapping)
+        template[index]["title"] = (
+            letters_to_sort_by[index] + template[index]["title"]
+        )
+    await es_write_data(template, module="films")
 
-    response = await make_get_request('/films/', query_data)
+    response = await make_get_request("/films/", query_data)
     body, status = response
     assert status == expected_answer["status"]
     ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! expected_answer["length"] - 1
@@ -61,7 +101,11 @@ async def test_sorted(make_get_request, es_write_data, query_data, expected_answ
     if isinstance(body, list):
         for doc in body:
             assert doc.get("uuid") in ids
-        assert body[0].get(expected_answer["field"]) == expected_answer["check_param"]
+        assert (
+            body[0].get(expected_answer["field"])
+            == expected_answer["check_param"]
+        )
+
 
 # test_filtered ПОКА НЕ РАБОТАЕТ, ПРОБЛЕМЫ С API
 # @pytest.mark.parametrize(
@@ -76,13 +120,12 @@ async def test_sorted(make_get_request, es_write_data, query_data, expected_answ
 # )
 # @pytest.mark.asyncio
 # async def test_filtered(make_get_request, es_write_data, query_data, expected_answer):
-#     mapping = test_settings.es_index_mapping["films_mapping"]
 #     template = [{"uuid": id} for id in ids]
 #     for id in template:
 #         id.update(es_films_data)
 #     for index in range(expected_answer["length"]):
 #         template[index]["genre"].append(expected_answer["check_param"])
-#     await es_write_data(template, mapping)
+#     await es_write_data(template, module="films")
 
 #     response = await make_get_request('/films/', query_data)
 #     body, status = response
@@ -99,7 +142,10 @@ async def test_sorted(make_get_request, es_write_data, query_data, expected_answ
     "query_data, expected_answer",
     [
         ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! "sort нужно будет убрать после исправления api
-        ({"page_number": 1, "page_size": 4, "sort": "-imdb_rating"}, {"status": 200, "length": 4, "check_param": 3}),
+        (
+            {"page_number": 1, "page_size": 4, "sort": "-imdb_rating"},
+            {"status": 200, "length": 4, "check_param": 3},
+        ),
         # ({"sort": "-imdb_rating"}, {"status": 200, "length": len(ids), "field": "imdb_rating", "check_param": 9}),
         # ({"sort": "title.raw"}, {"status": 200, "length": len(ids), "field": "title", "check_param": "a" + es_films_data["title"]}),
         # ({"sort": "-title.raw"}, {"status": 200, "length": len(ids), "field": "title", "check_param": "v" + es_films_data["title"]}),
@@ -108,16 +154,17 @@ async def test_sorted(make_get_request, es_write_data, query_data, expected_answ
     ],
 )
 @pytest.mark.asyncio
-async def test_paginated(make_get_request, es_write_data, query_data, expected_answer):
-    mapping = test_settings.es_index_mapping["films_mapping"]
+async def test_paginated(
+    make_get_request, es_write_data, query_data, expected_answer
+):
     template = [{"uuid": id} for id in ids]
     for id in template:
         id.update(es_films_data)
     for index in range(10):
         template[index]["imdb_rating"] = float(index + 1)
-    await es_write_data(template, mapping)
+    await es_write_data(template, module="films")
 
-    response = await make_get_request('/films/', query_data)
+    response = await make_get_request("/films/", query_data)
     body, status = response
     assert status == expected_answer["status"]
     ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! expected_answer["length"] - 1
@@ -126,9 +173,13 @@ async def test_paginated(make_get_request, es_write_data, query_data, expected_a
         for doc in body:
             assert doc.get("uuid") in ids
         # assert body[0].get(expected_answer["field"]) == expected_answer["check_param"]
-        sorted_template_by_imdb_rating_desc = sorted(template, key=lambda x: x["imdb_rating"], reverse=True)
+        sorted_template_by_imdb_rating_desc = sorted(
+            template, key=lambda x: x["imdb_rating"], reverse=True
+        )
         ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! expected_answer["check_param"]-1
-        assert sorted_template_by_imdb_rating_desc[expected_answer["check_param"]].get("uuid") == body[expected_answer["check_param"]-1].get("uuid")
+        assert sorted_template_by_imdb_rating_desc[
+            expected_answer["check_param"]
+        ].get("uuid") == body[expected_answer["check_param"] - 1].get("uuid")
 
 
 @pytest.mark.parametrize(
@@ -140,14 +191,15 @@ async def test_paginated(make_get_request, es_write_data, query_data, expected_a
     ],
 )
 @pytest.mark.asyncio
-async def test_search(make_get_request, es_write_data, query_data, expected_answer):
-    mapping = test_settings.es_index_mapping["films_mapping"]
+async def test_search(
+    make_get_request, es_write_data, query_data, expected_answer
+):
     template = [{"uuid": id} for id in ids]
     for id in template:
         id.update(es_films_data)
-    await es_write_data(template, mapping)
+    await es_write_data(template, module="films")
 
-    response = await make_get_request('/films/search/', query_data)
+    response = await make_get_request("/films/search/", query_data)
     body, status = response
     assert status == expected_answer["status"]
     #### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! expected_answer["length"] - 1
