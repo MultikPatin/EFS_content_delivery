@@ -72,7 +72,7 @@ class ElasticDB(AbstractDBClient):
                 index=index,
                 filter_path=kwargs.get("filter_path"),
                 query=kwargs.get("query"),
-                from_=page_number,
+                from_=(page_number - 1) * page_size,
                 size=page_size,
                 sort=kwargs.get("sort"),
             )
@@ -115,7 +115,7 @@ class ElasticDB(AbstractDBClient):
                 index=index,
                 filter_path="hits.hits._source",
                 query=body,
-                from_=page_number,
+                from_=(page_number - 1) * page_size,
                 size=page_size,
                 sort=kwargs.get("sort"),
             )
