@@ -23,23 +23,27 @@ class TestSettings(BaseSettings):
     es_id_field: str = "uuid"
     es_index_data: dict[str, dict[str, Any]] = {
         "films": {
-            "name": "test_movies",
+            "name": "movies",
             "mappings": FILMS_ELASTIC_MAPPING,
             "settings": ELASTIC_SETTINGS,
         },
         "genres": {
-            "name": "test_genres",
+            "name": "genres",
             "mappings": GENRES_ELASTIC_MAPPING,
             "settings": ELASTIC_SETTINGS,
         },
         "persons": {
-            "name": "test_persons",
+            "name": "persons",
             "mappings": PERSONS_ELASTIC_MAPPING,
             "settings": ELASTIC_SETTINGS,
         },
     }
+
     redis_host: str = Field(default=..., alias="REDIS_HOST")
     redis_port: int = Field(default=6379, alias="REDIS_PORT")
+
+    api_host: str = Field(default=..., alias="API_HOST")
+    api_port: int = Field(default=6379, alias="API_PORT")
 
     @property
     def get_es_host(self) -> str:
@@ -52,6 +56,12 @@ class TestSettings(BaseSettings):
         if self.local == "True":
             return {"host": "127.0.0.1", "port": self.es_port}
         return {"host": self.es_host, "port": self.es_port}
+
+    @property
+    def get_api_host(self) -> str:
+        if self.local == "True":
+            return "http://127.0.0.1"
+        return f"http://{self.api_host}:{self.api_port}"
 
 
 settings = TestSettings()
