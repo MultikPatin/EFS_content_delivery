@@ -76,11 +76,10 @@ async def session():
 @pytest.fixture
 def make_get_request(session: aiohttp.ClientSession):
     async def inner(path: str, query_data: dict = None):
-        url = settings.service_url + "/api/v1" + path
+        url = settings.get_api_host + "/api/v1" + path
         async with session.get(url, params=query_data) as response:
             body = await response.json()
             status = response.status
-
         return body, status
 
     return inner
