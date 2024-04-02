@@ -19,7 +19,7 @@ def event_loop():
 def get_es_bulk_query(data, index, id):
     bulk_query: list[dict] = []
     for row in data:
-        doc = {"_index": "movies", "_id": row["uuid"]}
+        doc = {"_index": index, "_id": row[id]}
         doc.update({"_source": row})
         bulk_query.append(doc)
     return bulk_query
@@ -34,16 +34,16 @@ async def es_client():
 
 @pytest.fixture
 def es_write_data(es_client: AsyncElasticsearch):
-    async def inner(data: list[dict]):
+    async def inner(data: list[dict], mapping: dict):
         bulk_query = get_es_bulk_query(
-            data, test_settings.es_index, test_settings.es_id_field
+            data, test_settings.es_movies_index, test_settings.es_id_field
         )
-        if await es_client.indices.exists(index=test_settings.es_index):
-            await es_client.indices.delete(index=test_settings.es_index)
+        if await es_client.indices.exists(index=test_settings.es_movies_index):
+            await es_client.indices.delete(index=test_settings.es_movies_index)
         await es_client.indices.create(
-            index=test_settings.es_index,
+            index=test_settings.es_movies_index,
             settings=test_settings.es_index_settings,
-            mappings=test_settings.es_index_mapping,
+            mappings=mapping,
         )
 
         _, errors = await async_bulk(
@@ -63,7 +63,7 @@ async def session():
 
 @pytest.fixture
 def make_get_request(session):
-    async def inner(path: str, query_data: dict):
+    async def inner(path: str, query_data: dict = None):
         url = test_settings.service_url + "/api/v1" + path
         async with session.get(url, params=query_data) as response:
             body = await response.json()
