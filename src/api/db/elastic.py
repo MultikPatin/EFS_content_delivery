@@ -78,6 +78,8 @@ class ElasticDB(AbstractDBClient):
             )
         except (NotFoundError, ConnectionError):
             return None
+        if not docs:
+            return None
         return [model(**doc["_source"]) for doc in docs["hits"]["hits"]]
 
     async def get_search_by_query(
