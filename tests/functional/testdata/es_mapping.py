@@ -1,4 +1,4 @@
-_ELASTIC_SETTINGS = {
+ELASTIC_SETTINGS = {
     "refresh_interval": "1s",
     "analysis": {
         "filter": {
@@ -33,7 +33,7 @@ _ELASTIC_SETTINGS = {
     },
 }
 
-_FILMS_ELASTIC_MAPPING = {
+FILMS_ELASTIC_MAPPING = {
     "dynamic": "strict",
     "properties": {
         "uuid": {"type": "keyword"},
@@ -79,7 +79,7 @@ _FILMS_ELASTIC_MAPPING = {
     },
 }
 
-_GENRES_ELASTIC_MAPPING = {
+GENRES_ELASTIC_MAPPING = {
     "dynamic": "strict",
     "properties": {
         "uuid": {"type": "keyword"},
@@ -88,7 +88,7 @@ _GENRES_ELASTIC_MAPPING = {
     },
 }
 
-_PERSONS_ELASTIC_MAPPING = {
+PERSONS_ELASTIC_MAPPING = {
     "dynamic": "strict",
     "properties": {
         "uuid": {"type": "keyword"},
