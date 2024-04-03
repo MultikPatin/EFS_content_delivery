@@ -70,7 +70,7 @@ async def films(
         page_size_query,
     ] = 50,
     genre: Annotated[
-        str | None,
+        UUID | None,
         Query(
             title="Genre UUID",
             description="The UUID of the genre to filter movies",
