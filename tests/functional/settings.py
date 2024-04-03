@@ -54,8 +54,8 @@ class TestSettings(BaseSettings):
     @property
     def get_redis_host(self) -> dict[str, Any]:
         if self.local == "True":
-            return {"host": "127.0.0.1", "port": self.es_port}
-        return {"host": self.es_host, "port": self.es_port}
+            return {"host": "127.0.0.1", "port": self.redis_port}
+        return {"host": self.redis_host, "port": self.redis_port}
 
     @property
     def get_api_host(self) -> str:
