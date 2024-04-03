@@ -40,7 +40,7 @@ async def es_client():
 async def redis_client():
     client = Redis(**settings.get_redis_host)
     yield client
-    await client.close()
+    await client.aclose()
 
 
 @pytest.fixture
@@ -63,6 +63,26 @@ def es_write_data(es_client: AsyncElasticsearch):
         )
         if errors:
             raise Exception("Ошибка записи данных в Elasticsearch")
+
+    return inner
+
+
+@pytest.fixture
+def es_delete_data(es_client: AsyncElasticsearch):
+    async def inner(module: str):
+        index_data = settings.es_index_data[module]
+
+        if await es_client.indices.exists(index=index_data["name"]):
+            await es_client.indices.delete(index=index_data["name"])
+
+    return inner
+
+
+@pytest.fixture
+def clear_cache(redis_client: Redis):
+    async def inner():
+        print(f"CACHE BEFORE DEL: {await redis_client.scan()}")
+        await redis_client.flushdb(asynchronous=True)
 
     return inner
 
