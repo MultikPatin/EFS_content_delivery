@@ -70,9 +70,9 @@ async def test_by_id(make_get_request, es_write_data, query_data, expected_answe
     "query_data, expected_answer",
     [
         ({"query": "Antinio"}, {"status": 200, "length": 5}),
-        ({"query": "Antonio Banderas"}, {"status": 200, "length": 5}),
-        ({"query": "onio andera"}, {"status": 200, "length": 5}),
-        ({"query": "itt"}, {"status": 200, "length": 5}),
+        ({"query": "antonio banderas"}, {"status": 200, "length": 5}),
+        ({"query": "onio anDera"}, {"status": 200, "length": 5}),
+        ({"query": "pit"}, {"status": 200, "length": 5}),
         ({"query": "onio"}, {"status": 404, "length": 1}),
         ({"query": "Mashed potato"}, {"status": 404, "length": 1}),
     ],

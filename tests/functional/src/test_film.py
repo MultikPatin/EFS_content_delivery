@@ -200,7 +200,9 @@ async def test_paginated(
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
+        ({"query": "The Star"}, {"status": 200, "length": len(ids)}),
         ({"query": "star"}, {"status": 200, "length": len(ids)}),
+        ({"query": "taR"}, {"status": 200, "length": len(ids)}),
         ({"query": "Mashed potato"}, {"status": 404, "length": 1}),
     ],
 )
