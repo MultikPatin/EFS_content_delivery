@@ -12,8 +12,6 @@ from tests.functional.testdata.es_data import (
     ids,
 )
 
-import string
-
 
 @pytest.mark.parametrize(
     "query_data, expected_answer",

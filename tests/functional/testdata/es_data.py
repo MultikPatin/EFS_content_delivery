@@ -1,6 +1,7 @@
 import uuid
 
-id_good = str(uuid.uuid4())
+id_good_1 = str(uuid.uuid4())
+id_good_2 = str(uuid.uuid4())
 id_bad = str(uuid.uuid4())
 id_invalid = "definitely not ID"
 
@@ -51,15 +52,14 @@ es_genres_data = [
     for _ in range(60)
 ]
 
-es_persons_data = [
-    {
-        "uuid": str(uuid.uuid4()),
-        "full_name": "Antinio Banderos",
+es_persons_data_1 = {
+        # "uuid": str(uuid.uuid4()),
+        "full_name": "Antonio Banderas",
         "films": [
             {
                 "uuid": "caf76c67-c0fe-477e-8766-3ab3ff2574b5",
                 "title": "Zorro",
-                "imdb_rating": 10,
+                "imdb_rating": 8,
                 "roles": ["actor", "director"],
             },
             {
@@ -70,5 +70,46 @@ es_persons_data = [
             },
         ],
     }
-    for _ in range(60)
+
+es_persons_data_2 = {
+        # "uuid": str(uuid.uuid4()),
+        "full_name": "Brad Pitt",
+        "films": [
+            {
+                "uuid": "caf76c67-c0fe-477e-8766-3ab3ff2574b5",
+                "title": "Meet Joe Black",
+                "imdb_rating": 10,
+                "roles": ["actor", "director"],
+            },
+            {
+                "uuid": "8c3a9002-d379-4d75-ad4e-429ea5b29df8",
+                "title": "Troy",
+                "imdb_rating": 8,
+                "roles": ["actor", "writer"],
+            },
+        ],
+    }
+person_re_1 = [
+    {
+        "uuid": "caf76c67-c0fe-477e-8766-3ab3ff2574b5",
+        "title": "Zorro",
+        "imdb_rating": 8,
+    },
+    {
+        "uuid": "8c3a9002-d379-4d75-ad4e-429ea5b29df8",
+        "title": "Spy kids",
+        "imdb_rating": 1,
+    },
+]
+person_re_2 = [
+    {
+        "uuid": "caf76c67-c0fe-477e-8766-3ab3ff2574b5",
+        "title": "Meet Joe Black",
+        "imdb_rating": 10,
+    },
+    {
+        "uuid": "8c3a9002-d379-4d75-ad4e-429ea5b29df8",
+        "title": "Troy",
+        "imdb_rating": 8,
+    },
 ]
