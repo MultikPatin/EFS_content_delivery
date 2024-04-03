@@ -24,6 +24,10 @@ api = [
     "gunicorn",
     "uvicorn",
 ]
+test = [
+    "elasticsearch",
+    "redis",
+]
 
 [tool.poetry.group.dev]
 optional = true
