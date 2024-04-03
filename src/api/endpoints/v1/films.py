@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
@@ -18,7 +19,7 @@ router = APIRouter()
 @router.get("/{film_id}", response_model=Film, summary="Get film details by id")
 async def film_details(
     film_id: Annotated[
-        str,
+        UUID,
         Path(
             title="film id",
             description="The UUID of the film to get",

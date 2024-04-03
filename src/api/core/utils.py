@@ -20,14 +20,14 @@ page_number_query = Query(
     title="Page number",
     description="The number of the page to get",
     ge=1,
-    le=10000,
+    le=100,
 )
 
 page_size_query = Query(
     title="Page size",
     description="The size of the page to get",
     ge=1,
-    le=10000,
+    le=100,
 )
 
 search_query = Query(
