@@ -36,7 +36,6 @@ async def test_by_id(make_get_request, es_write_data, film, expected_answer):
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! "sort_char": для imdb_rating должны быть 1 и 10, length for 422 = 1, not 2
         (
             {"sort": "imdb_rating"},
             {
@@ -74,7 +73,7 @@ async def test_by_id(make_get_request, es_write_data, film, expected_answer):
             },
         ),
         ({"sort": "not valid field"}, {"status": 422, "length": 1}),
-        # ({"sort": None}, {"status": 200, "length": len(ids)}), # уже не помню, в каком виде должно возвращать, но должно!
+        ({}, {"status": 200, "length": len(ids)})
     ],
 )
 @pytest.mark.asyncio
@@ -84,7 +83,7 @@ async def test_sorted(
     template = [{"uuid": id} for id in ids][:10]
     for id in template:
         id.update(es_films_data)
-    # 'adgjmpsvyB'
+    # 'acegikmoqs'
     letters_to_sort_by = string.ascii_letters[:20:2]
     for index in range(10):
         template[index]["imdb_rating"] = float(index + 1)
@@ -101,21 +100,20 @@ async def test_sorted(
     if isinstance(body, list):
         for doc in body:
             assert doc.get("uuid") in ids
-        assert (
-            body[0].get(expected_answer["field"])
-            == expected_answer["check_param"]
-        )
+        if query_data.get("sort"):
+            assert (
+                body[0].get(expected_answer["field"])
+                == expected_answer["check_param"]
+            )
 
 
-# test_filtered ПОКА НЕ РАБОТАЕТ, ПРОБЛЕМЫ С API
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! length for 422 = 1, not 2
         ({"genre": id_good}, {"status": 200, "length": 3, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
-        # ({"genre": id_bad}, {"status": 404, "length": 1, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
+        ({"genre": id_bad}, {"status": 404, "length": 1, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
         # ### добавить валидацию uuid на endpoint, поменять статус на 422
-        # ({"genre": id_invalid}, {"status": 404, "length": 1, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
+        ({"genre": id_invalid}, {"status": 404, "length": 1, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
     ],
 )
 @pytest.mark.asyncio
@@ -144,44 +142,62 @@ async def test_filtered(make_get_request, es_write_data, query_data, expected_an
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ### НИЖЕ КОЛОССАЛЬНЫЙ КОСТЫЛЬ!!!! "sort нужно будет убрать после исправления api
         (
-            {"page_number": 1, "page_size": 4, "sort": "-imdb_rating"},
-            {"status": 200, "length": 4, "check_param": 3},
+            {"page_number": 2, "page_size": 4}, {"status": 200, "length": 4},
         ),
-        # ({"sort": "-imdb_rating"}, {"status": 200, "length": len(ids), "field": "imdb_rating", "check_param": 9}),
-        # ({"sort": "title.raw"}, {"status": 200, "length": len(ids), "field": "title", "check_param": "a" + es_films_data["title"]}),
-        # ({"sort": "-title.raw"}, {"status": 200, "length": len(ids), "field": "title", "check_param": "v" + es_films_data["title"]}),
-        # ({"sort": "not valid field"}, {"status": 422, "length": 2}),
-        # ({"sort": None}, {"status": 200, "length": len(ids)}), # уже не помню, в каком виде должно возвращать, но должно!
+        (
+            {"page_number": 3, "page_size": 4}, {"status": 200, "length": 2},
+        ),
+        (
+            {"page_number": 4, "page_size": 2}, {"status": 200, "length": 2},
+        ),
+        (
+            {"page_number": 0, "page_size": 2}, {"status": 422, "length": 1},
+        ),
+        (
+            {"page_number": 2, "page_size": 0}, {"status": 422, "length": 1},
+        ),
+        (
+            {"page_number": -1, "page_size": 2}, {"status": 422, "length": 1},
+        ),
+        (
+            {"page_number": 1, "page_size": -1}, {"status": 422, "length": 1},
+        ),
+        # Поменять валидацию page_number и page_size на макс 100
+        (
+            {"page_number": 101, "page_size": 2}, {"status": 404, "length": 1},
+        ),
+        (
+            {"page_number": 2, "page_size": 101}, {"status": 404, "length": 1},
+        ),
+        (
+            {"page_number": "not int value", "page_size": 2}, {"status": 422, "length": 1},
+        ),
+        (
+            {"page_number": 5, "page_size": "not int value"}, {"status": 422, "length": 1},
+        ),
     ],
 )
 @pytest.mark.asyncio
 async def test_paginated(
     make_get_request, es_write_data, query_data, expected_answer
 ):
-    template = [{"uuid": id} for id in ids]
+    template = [{"uuid": id} for id in ids][:10]
     for id in template:
         id.update(es_films_data)
-    for index in range(10):
-        template[index]["imdb_rating"] = float(index + 1)
     await es_write_data(template, module="films")
 
     response = await make_get_request("/films/", query_data)
     body, status = response
-    assert status == expected_answer["status"]
 
+    assert status == expected_answer["status"]
     assert len(body) == expected_answer["length"]
     if isinstance(body, list):
-        for doc in body:
-            assert doc.get("uuid") in ids
-        # assert body[0].get(expected_answer["field"]) == expected_answer["check_param"]
-        sorted_template_by_imdb_rating_desc = sorted(
-            template, key=lambda x: x["imdb_rating"], reverse=True
-        )
-        assert sorted_template_by_imdb_rating_desc[
-            expected_answer["check_param"]
-        ].get("uuid") == body[expected_answer["check_param"]].get("uuid")
+        for index in range(expected_answer.get("length")):
+            start = (query_data.get("page_number") - 1) * query_data.get("page_size")
+            stop = query_data.get("page_number") * query_data.get("page_size")
+
+            assert template[start:stop][index].get("uuid") == body[index].get("uuid")
 
 
 @pytest.mark.parametrize(
