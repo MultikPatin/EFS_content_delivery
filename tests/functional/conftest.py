@@ -1,6 +1,7 @@
 import asyncio
 from typing import Any
 
+import json
 import pytest
 import pytest_asyncio
 from elasticsearch import AsyncElasticsearch
@@ -77,9 +78,12 @@ async def session():
 def make_get_request(session: aiohttp.ClientSession):
     async def inner(path: str, query_data: dict = None):
         url = settings.get_api_host + "/api/v1" + path
-        async with session.get(url, params=query_data) as response:
-            body = await response.json()
+        try:
+            async with session.get(url, params=query_data) as response:
+                body = await response.read()
+            body = json.loads(body)
             status = response.status
-        return body, status
+        finally:
+            return body, status
 
     return inner
