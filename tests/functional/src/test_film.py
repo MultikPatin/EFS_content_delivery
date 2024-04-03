@@ -17,7 +17,7 @@ import string
         ({"film_id": id_good}, {"status": 200, "uuid": id_good}),
         ({"film_id": id_bad}, {"status": 404, "uuid": id_bad}),
         #### НИЖЕ КОСТЫЛЬ!!!! - добавить валидацию uuid на endpoint, поменять статус на 422
-        ({"film_id": id_invalid}, {"status": 404, "uuid": id_invalid}),
+        ({"film_id": id_invalid}, {"status": 422, "uuid": id_invalid}),
     ],
 )
 @pytest.mark.asyncio
@@ -113,7 +113,7 @@ async def test_sorted(
         ({"genre": id_good}, {"status": 200, "length": 3, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
         ({"genre": id_bad}, {"status": 404, "length": 1, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
         # ### добавить валидацию uuid на endpoint, поменять статус на 422
-        ({"genre": id_invalid}, {"status": 404, "length": 1, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
+        ({"genre": id_invalid}, {"status": 422, "length": 1, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
     ],
 )
 @pytest.mark.asyncio
@@ -165,10 +165,10 @@ async def test_filtered(make_get_request, es_write_data, query_data, expected_an
         ),
         # Поменять валидацию page_number и page_size на макс 100
         (
-            {"page_number": 101, "page_size": 2}, {"status": 404, "length": 1},
+            {"page_number": 101, "page_size": 2}, {"status": 422, "length": 1},
         ),
         (
-            {"page_number": 2, "page_size": 101}, {"status": 404, "length": 1},
+            {"page_number": 2, "page_size": 101}, {"status": 422, "length": 1},
         ),
         (
             {"page_number": "not int value", "page_size": 2}, {"status": 422, "length": 1},
