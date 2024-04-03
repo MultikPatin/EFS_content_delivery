@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 
@@ -23,7 +24,7 @@ router = APIRouter()
 )
 async def person_details(
     person_id: Annotated[
-        str,
+        UUID,
         Path(
             title="person id",
             description="The UUID of the person to get",
@@ -113,7 +114,7 @@ async def persons_search_by_full_name(
 )
 async def person_details_films(
     person_id: Annotated[
-        str,
+        UUID,
         Path(
             title="person id",
             description="The UUID of the person to get",
