@@ -2,7 +2,7 @@ import pytest
 
 from tests.functional.testdata.es_data import (
     es_films_data,
-    id_good,
+    id_good_1,
     id_bad,
     id_invalid,
     ids,
@@ -12,21 +12,20 @@ import string
 
 
 @pytest.mark.parametrize(
-    "film, expected_answer",
+    "query_data, expected_answer",
     [
-        ({"film_id": id_good}, {"status": 200, "uuid": id_good}),
+        ({"film_id": id_good_1}, {"status": 200, "uuid": id_good_1}),
         ({"film_id": id_bad}, {"status": 404, "uuid": id_bad}),
-        #### НИЖЕ КОСТЫЛЬ!!!! - добавить валидацию uuid на endpoint, поменять статус на 422
         ({"film_id": id_invalid}, {"status": 422, "uuid": id_invalid}),
     ],
 )
 @pytest.mark.asyncio
-async def test_by_id(make_get_request, es_write_data, film, expected_answer):
-    template = [{"uuid": id_good}]
+async def test_by_id(make_get_request, es_write_data, query_data, expected_answer):
+    template = [{"uuid": id_good_1}]
     template[0].update(es_films_data)
     await es_write_data(template, module="films")
 
-    response = await make_get_request(f'/films/{film["film_id"]}')
+    response = await make_get_request(f'/films/{query_data["film_id"]}')
     body, status = response
     assert status == expected_answer["status"]
     if body.get("uuid"):
@@ -83,7 +82,7 @@ async def test_sorted(
     template = [{"uuid": id} for id in ids][:10]
     for id in template:
         id.update(es_films_data)
-    # 'acegikmoqs'
+    # letters_to_sort_by = "acegikmoqs"
     letters_to_sort_by = string.ascii_letters[:20:2]
     for index in range(10):
         template[index]["imdb_rating"] = float(index + 1)
@@ -110,10 +109,9 @@ async def test_sorted(
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"genre": id_good}, {"status": 200, "length": 3, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
-        ({"genre": id_bad}, {"status": 404, "length": 1, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
-        # ### добавить валидацию uuid на endpoint, поменять статус на 422
-        ({"genre": id_invalid}, {"status": 422, "length": 1, "field": "genre", "check_param": {"uuid": id_good, "name": "Drama"}}),
+        ({"genre": id_good_1}, {"status": 200, "length": 3, "field": "genre", "check_param": {"uuid": id_good_1, "name": "Drama"}}),
+        ({"genre": id_bad}, {"status": 404, "length": 1, "field": "genre", "check_param": {"uuid": id_good_1, "name": "Drama"}}),
+        ({"genre": id_invalid}, {"status": 422, "length": 1, "field": "genre", "check_param": {"uuid": id_good_1, "name": "Drama"}}),
     ],
 )
 @pytest.mark.asyncio
@@ -163,7 +161,6 @@ async def test_filtered(make_get_request, es_write_data, query_data, expected_an
         (
             {"page_number": 1, "page_size": -1}, {"status": 422, "length": 1},
         ),
-        # Поменять валидацию page_number и page_size на макс 100
         (
             {"page_number": 101, "page_size": 2}, {"status": 422, "length": 1},
         ),
