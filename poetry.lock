@@ -1193,8 +1193,9 @@ multidict = ">=4.0"
 
 [extras]
 api = ["elasticsearch", "fastapi", "gunicorn", "redis", "uvicorn"]
+test = ["elasticsearch", "redis"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "a2c9e616e04da0254314915c54c209739dae67069f76b0c1386d599f7351f324"
+content-hash = "123485771a1191f637bafb340fc279677638ceb1edb53c846e6be32c7d94a6d1"
