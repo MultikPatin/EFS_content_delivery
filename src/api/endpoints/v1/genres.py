@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 
@@ -15,7 +16,7 @@ router = APIRouter()
 )
 async def genre_details(
     genre_id: Annotated[
-        str,
+        UUID,
         Path(
             title="genre id",
             description="The UUID of the genre to get",
