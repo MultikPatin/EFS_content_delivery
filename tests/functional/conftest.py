@@ -39,7 +39,6 @@ async def es_client():
 @pytest_asyncio.fixture(scope="session")
 async def redis_client():
     client = Redis(**settings.get_redis_host)
-    # print(f"\n\n\n{settings.get_redis_host}\n\n\n\n")
     yield client
     await client.aclose()
 
@@ -82,7 +81,6 @@ def es_delete_data(es_client: AsyncElasticsearch):
 @pytest.fixture
 def clear_cache(redis_client: Redis):
     async def inner():
-        print(f"CACHE BEFORE DEL: {await redis_client.scan()}")
         await redis_client.flushdb(asynchronous=True)
 
     return inner
@@ -96,15 +94,13 @@ async def session():
 
 
 @pytest.fixture
-def make_get_request(session: aiohttp.ClientSession):
+def make_get_request(session: aiohttp.ClientSession, redis_client: Redis):
     async def inner(path: str, query_data: dict = None):
         url = settings.get_api_host + "/api/v1" + path
-        try:
-            async with session.get(url, params=query_data) as response:
-                body = await response.read()
-            body = json.loads(body)
-            status = response.status
-        finally:
-            return body, status
+        async with session.get(url, params=query_data) as response:
+            body = await response.read()
+        body = json.loads(body)
+        status = response.status
+        return body, status
 
     return inner

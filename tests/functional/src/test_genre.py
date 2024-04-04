@@ -11,30 +11,11 @@ from tests.functional.testdata.genres_data import es_genres_data
 
 
 @pytest.mark.parametrize(
-    "film, expected_answer",
-    [
-        ({"genre_id": id_good_1}, {"status": 200, "uuid": id_good_1}),
-        ({"genre_id": id_bad}, {"status": 404, "uuid": id_bad}),
-        ({"genre_id": id_invalid}, {"status": 422, "uuid": id_invalid}),
-    ],
-)
-@pytest.mark.asyncio
-async def test_by_id(make_get_request, es_write_data, film, expected_answer):
-    template = [{"uuid": id_good_1}]
-    template[0].update(es_genres_data)
-    await es_write_data(template, module="genres")
-    response = await make_get_request(f'/genres/{film["genre_id"]}')
-    body, status = response
-
-    assert status == expected_answer["status"]
-    if body.get("uuid"):
-        assert body["uuid"] == expected_answer["uuid"]
-
-
-@pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"genre_id": id_good_1}, {"status": 200, "uuid": id_good_1}),
+        ({"genre_id": id_good_1}, {"status": 200, "uuid": id_good_1, "keys": ["uuid", "name"]}),
+        ({"genre_id": id_bad}, {"status": 404}),
+        ({"genre_id": id_invalid}, {"status": 422}),
     ],
 )
 @pytest.mark.asyncio
@@ -51,49 +32,24 @@ async def test_one_genre(
     await es_write_data(template, module="genres")
 
     await clear_cache()
-    es_response = await make_get_request(
-        f"/genres/{query_data.get('genre_id')}"
-    )
+    path = f"/genres/{query_data.get('genre_id')}"
+    es_response = await make_get_request(path)
     es_body, es_status = es_response
 
     assert es_status == expected_answer.get("status")
     if es_status == 200:
         await es_delete_data(module="genres")
-
-        rd_response = await make_get_request(
-            f"/genres/{query_data.get('genre_id')}"
-        )
+        rd_response = await make_get_request(path)
         rd_body, rd_status = rd_response
 
         assert es_status == rd_status
         assert es_body == rd_body
         assert es_body.get("uuid") == expected_answer.get("uuid")
-        assert rd_body.get("uuid") == expected_answer.get("uuid")
-
-
-@pytest.mark.asyncio
-async def test_get_genre(make_get_request, es_write_data):
-    template = [{"uuid": id_good_1}]
-    template[0].update(es_genres_data)
-    await es_write_data(template, module="genres")
-    response = await make_get_request(f"/genres/{id_good_1}")
-    expected_keys = ["uuid", "name"]
-    expected_body = {
-        "uuid": id_good_1,
-        "name": "Action",
-    }
-    body, status = response
-
-    for key in body.keys():
-        assert key in expected_keys, (
-            "При GET-запросе к эндпоинту `api/v1/genres/{genre_id}` в ответе API должны "
-            f"быть ключи `{expected_keys}`."
-        )
-
-    assert body == expected_body, (
-        "При GET-запросе к эндпоинту `api/v1/genres/{genre_id}` тело ответа API "
-        "отличается от ожидаемого."
-    )
+        for key in es_body.keys():
+            assert key in expected_answer.get("keys"), (
+                "При GET-запросе к эндпоинту `api/v1/genres/{genre_id}` в ответе API должны "
+                f"быть ключи `{expected_answer.get('keys')}`."
+            )
 
 
 @pytest.mark.parametrize(
@@ -147,25 +103,33 @@ async def test_get_genre(make_get_request, es_write_data):
 )
 @pytest.mark.asyncio
 async def test_paginated(
-    make_get_request, es_write_data, query_data, expected_answer
+    make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer
 ):
     template = [{"uuid": id} for id in ids[:10]]
     for id in template:
         id.update(es_genres_data)
     await es_write_data(template, module="genres")
 
-    response = await make_get_request("/genres/", query_data)
-    body, status = response
+    await clear_cache()
+    path = "/genres/"
+    es_response = await make_get_request(path, query_data)
+    es_body, es_status = es_response
 
-    assert status == expected_answer.get("status")
-    if status == 200:
-        assert len(body) == expected_answer.get("length")
+    assert es_status == expected_answer.get("status")
+    if es_status == 200:
+        await es_delete_data(module="genres")
+        rd_response = await make_get_request(path, query_data)
+        rd_body, rd_status = rd_response
+
+        assert es_status == rd_status
+        assert es_body == rd_body
+        assert len(es_body) == expected_answer.get("length")
         for index in range(expected_answer.get("length")):
             start = (query_data.get("page_number") - 1) * query_data.get(
                 "page_size"
             )
             stop = query_data.get("page_number") * query_data.get("page_size")
 
-            assert template[start:stop][index].get("uuid") == body[index].get(
+            assert template[start:stop][index].get("uuid") == es_body[index].get(
                 "uuid"
             )
