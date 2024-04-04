@@ -1,0 +1,86 @@
+version: "3.9"
+name: movies_app
+services:
+
+  elastic:
+    image: elasticsearch:${ELASTIC_VERSION}
+    container_name: ${ELASTIC_HOST}
+    restart: always
+    environment:
+      - xpack.security.enabled=false
+      - "discovery.type=single-node"
+    env_file:
+      - .env
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: curl -s http://${ELASTIC_HOST}:9200 >/dev/null || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 50
+      start_period: 10s
+    networks:
+      - services
+
+  redis:
+    image: redis:${REDIS_VERSION}
+    container_name: ${REDIS_HOST}
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - redis_data:/var/lib/redis/data
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - services
+
+  api:
+    build:
+      dockerfile: src/api/Dockerfile
+    container_name: api
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      elastic:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8000"
+    networks:
+      - services
+
+  nginx:
+    image: nginx:${NGINX_VERSION}
+    container_name: gateway
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/configs:/etc/nginx/conf.d:ro
+      - static:/staticfiles/
+    restart: unless-stopped
+    depends_on:
+      elastic:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_started
+    ports:
+      - "443:443"
+      - "80:80"
+    networks:
+      - services
+
+
+volumes:
+  elastic_data:
+  redis_data:
+  static:
+
+networks:
+  services:
