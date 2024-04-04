@@ -15,6 +15,7 @@ from tests.functional.testdata.base_data import (
     ids,
 )
 
+
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
@@ -27,7 +28,7 @@ from tests.functional.testdata.base_data import (
 )
 @pytest.mark.asyncio
 async def test_person_films(
-    make_get_request, es_write_data, query_data, expected_answer
+    make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer
 ):
     template = [{"uuid": id} for id in ids[:10]]
     template[0] = {"uuid": id_good_1}
@@ -37,42 +38,27 @@ async def test_person_films(
         id_2.update(es_persons_data_2)
     await es_write_data(template, module="persons")
 
-    response = await make_get_request(f"/persons/{query_data.get('person_id')}/film", query_data)
-    body, status = response
+    await clear_cache()
+    path = f"/persons/{query_data.get('person_id')}/film"
+    es_response = await make_get_request(path, query_data)
+    es_body, es_status = es_response
 
-    assert status == expected_answer.get("status")
-    if status == 200:
-        assert len(body) == expected_answer.get("length")
-        assert body == expected_answer.get("films")
+    assert es_status == expected_answer.get("status")
+    if es_status == 200:
+        await es_delete_data(module="persons")
+        rd_response = await make_get_request(path, query_data)
+        rd_body, rd_status = rd_response
 
-
-@pytest.mark.parametrize(
-    "query_data, expected_answer",
-    [
-        ({"person_id": id_good_1}, {"status": 200, "uuid": id_good_1}),
-        ({"person_id": id_bad}, {"status": 404, "uuid": id_bad}),
-        ({"person_id": id_invalid}, {"status": 422}),
-        ({"person_id": id_invalid_blank}, {"status": 404}),
-    ],
-)
-@pytest.mark.asyncio
-async def test_one_person(make_get_request, es_write_data, query_data, expected_answer):
-    template = [{"uuid": id_good_1}]
-    template[0].update(es_persons_data_1)
-    await es_write_data(template, module="persons")
-
-    response = await make_get_request(f"/persons/{query_data.get('person_id')}")
-    body, status = response
-
-    assert status == expected_answer.get("status")
-    if status == 200:
-        assert body.get("uuid") == expected_answer.get("uuid")
+        assert es_status == rd_status
+        assert es_body == rd_body
+        assert len(es_body) == expected_answer.get("length")
+        assert es_body == expected_answer.get("films")
 
 
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"query": "Antinio"}, {"status": 200, "length": 5}),
+        ({"query": "Antonio"}, {"status": 200, "length": 5}),
         ({"query": "antonio banderas"}, {"status": 200, "length": 5}),
         ({"query": "onio anDera"}, {"status": 200, "length": 5}),
         ({"query": "pit"}, {"status": 200, "length": 5}),
@@ -82,7 +68,7 @@ async def test_one_person(make_get_request, es_write_data, query_data, expected_
 )
 @pytest.mark.asyncio
 async def test_search(
-    make_get_request, es_write_data, query_data, expected_answer
+    make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer
 ):
     template = [{"uuid": id} for id in ids[:10]]
     for id_1, id_2 in zip(template[:5], template[5:]):
@@ -90,11 +76,52 @@ async def test_search(
         id_2.update(es_persons_data_2)
     await es_write_data(template, module="persons")
 
-    response = await make_get_request("/persons/search/", query_data)
-    body, status = response
+    await clear_cache()
+    path = "/persons/search/"
+    es_response = await make_get_request(path, query_data)
+    es_body, es_status = es_response
 
-    assert status == expected_answer.get("status")
-    if status == 200:
-        assert len(body) == expected_answer.get("length")
-        for doc in body:
+    assert es_status == expected_answer.get("status")
+    if es_status == 200:
+        await es_delete_data(module="persons")
+        rd_response = await make_get_request(path, query_data)
+        rd_body, rd_status = rd_response
+        assert es_status == rd_status
+        assert es_body == rd_body
+        assert len(es_body) == expected_answer.get("length")
+        for doc in es_body:
             assert doc.get("uuid") in ids
+
+
+
+@pytest.mark.parametrize(
+    "query_data, expected_answer",
+    [
+        ({"person_id": id_good_1}, {"status": 200, "uuid": id_good_1}),
+        ({"person_id": id_bad}, {"status": 404}),
+        ({"person_id": id_invalid}, {"status": 422}),
+        ({"person_id": id_invalid_blank}, {"status": 404}),
+    ],
+)
+@pytest.mark.asyncio
+async def test_one_person(make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer):
+    await clear_cache()
+    template = [{"uuid": id_good_1}]
+    template[0].update(es_persons_data_1)
+    await es_write_data(template, module="persons")
+
+    await clear_cache()
+    path = f"/persons/{query_data.get('person_id')}"
+    es_response = await make_get_request(path)
+    es_body, es_status = es_response
+
+    assert es_status == expected_answer.get("status")
+    if es_status == 200:
+        await es_delete_data(module="persons")
+        rd_response = await make_get_request(path)
+        rd_body, rd_status = rd_response
+
+        assert es_status == rd_status
+        assert es_body == rd_body
+        assert es_body.get("uuid") == expected_answer.get("uuid")
+        assert rd_body.get("uuid") == expected_answer.get("uuid")

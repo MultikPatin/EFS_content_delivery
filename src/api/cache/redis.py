@@ -120,8 +120,8 @@ class RedisCache(AbstractModelCache):
         """
         try:
             list_count = await self.__redis.llen(key)  # type: ignore
-            end = 0 - list_count
-            values = await self.__redis.lrange(key, -1, end)  # type: ignore
+            values = await self.__redis.lrange(key, 0, list_count)  # type: ignore
+            values.reverse()
             if not values:
                 return None
         except Exception as get_error:
