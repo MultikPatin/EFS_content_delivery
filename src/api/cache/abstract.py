@@ -28,7 +28,7 @@ class AbstractModelCache(ABC):
             value (AbstractBaseModel): The model to cache.
             cache_expire (int): The number of seconds until the model expires.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def get_one_model(
@@ -44,7 +44,7 @@ class AbstractModelCache(ABC):
         Returns:
             The cached model, or None if the model is not in the cache.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def set_list_model(
@@ -61,7 +61,7 @@ class AbstractModelCache(ABC):
             values (list[AbstractBaseModel]): The list of models to cache.
             cache_expire (int): The number of seconds until the list of models expires.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def get_list_model(
@@ -77,7 +77,7 @@ class AbstractModelCache(ABC):
         Returns:
             The cached list of models, or None if the list of models is not in the cache.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def build_key(self, key_prefix: str, *args: Any) -> str:
@@ -91,4 +91,4 @@ class AbstractModelCache(ABC):
         Returns:
             The built cache key.
         """
-        pass
+        raise NotImplementedError

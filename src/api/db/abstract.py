@@ -26,7 +26,7 @@ class AbstractDBClient(ABC):
         Returns:
             AbstractBaseModel | None: The object with the given ID, or None if no object was found.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def get_all(
@@ -48,7 +48,7 @@ class AbstractDBClient(ABC):
         Returns:
             list[AbstractBaseModel] | None: A list of objects, or None if no objects were found.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def get_search_by_query(
@@ -74,4 +74,4 @@ class AbstractDBClient(ABC):
         Returns:
             list[AbstractBaseModel] | None: A list of objects that match the search query, or None if no objects were found.
         """
-        pass
+        raise NotImplementedError

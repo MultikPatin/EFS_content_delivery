@@ -1,5 +1,5 @@
 version: "3.9"
-name: movies_test_app
+name: test_movies_app
 services:
 
   elastic:
@@ -11,8 +11,6 @@ services:
       - "discovery.type=single-node"
     env_file:
       - .env
-    volumes:
-      - test_elastic_data:/usr/share/elasticsearch/data
     healthcheck:
       test: curl -s http://${ELASTIC_HOST}:${ELASTIC_PORT} >/dev/null || exit 1
       interval: 30s
@@ -30,8 +28,6 @@ services:
     restart: always
     env_file:
       - .env
-    volumes:
-      - test_redis_data:/var/lib/redis/data
     healthcheck:
       test: [ "CMD-SHELL", "redis-cli", "ping" ]
       interval: 10s
@@ -59,30 +55,10 @@ services:
     networks:
       - test_services
 
-  nginx:
-    image: nginx:${NGINX_VERSION}
-    container_name: gateway
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/configs:/etc/nginx/conf.d:ro
-    restart: unless-stopped
-    depends_on:
-      elastic:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      api:
-        condition: service_started
-    ports:
-      - "443:443"
-      - "80:80"
-    networks:
-      - test_services
-
-  test_api:
+  tests:
     build:
       dockerfile: tests/Dockerfile
-    container_name: test_api
+    container_name: tests
     restart: no
     environment:
       - LOCAL=False
@@ -95,10 +71,6 @@ services:
         condition: service_healthy
     networks:
       - test_services
-
-volumes:
-  test_elastic_data:
-  test_redis_data:
 
 networks:
   test_services:
