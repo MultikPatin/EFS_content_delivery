@@ -34,8 +34,8 @@ class PersonService(BaseElasticService[PersonDB]):
         self,
         person_id: str,
     ) -> list[FilmForPersonDB] | None:
-        self._key_prefix += "_films"
-        key = self._cache.build_key(self._key_prefix, person_id)
+        key_prefix = self._key_prefix + "_films"
+        key = self._cache.build_key(key_prefix, person_id)
         films = await self._cache.get_list_model(key, FilmForPersonDB)
         if not films:
             person = await self._db.get_by_id(
