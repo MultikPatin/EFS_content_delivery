@@ -1,4 +1,5 @@
 import pytest
+from http import HTTPStatus
 
 from tests.functional.testdata.films_data import (
     es_films_data_1,
@@ -19,9 +20,9 @@ import string
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"film_id": id_good_1}, {"status": 200, "uuid": id_good_1}),
-        ({"film_id": id_bad}, {"status": 404}),
-        ({"film_id": id_invalid}, {"status": 422}),
+        ({"film_id": id_good_1}, {"status": HTTPStatus.OK, "uuid": id_good_1}),
+        ({"film_id": id_bad}, {"status": HTTPStatus.NOT_FOUND}),
+        ({"film_id": id_invalid}, {"status": HTTPStatus.UNPROCESSABLE_ENTITY}),
     ],
 )
 @pytest.mark.asyncio
@@ -38,7 +39,7 @@ async def test_one_film(
     es_body, es_status = es_response
 
     assert es_status == expected_answer.get("status")
-    if es_status == 200:
+    if es_status == HTTPStatus.OK:
         await es_delete_data(module="films")
         rd_response = await make_get_request(path)
         rd_body, rd_status = rd_response
@@ -54,7 +55,7 @@ async def test_one_film(
         (
             {"sort": "imdb_rating"},
             {
-                "status": 200,
+                "status": HTTPStatus.OK,
                 "field": "imdb_rating",
                 "check_param": 1,
             },
@@ -62,7 +63,7 @@ async def test_one_film(
         (
             {"sort": "-imdb_rating"},
             {
-                "status": 200,
+                "status": HTTPStatus.OK,
                 "field": "imdb_rating",
                 "check_param": 10,
             },
@@ -70,7 +71,7 @@ async def test_one_film(
         (
             {"sort": "title.raw"},
             {
-                "status": 200,
+                "status": HTTPStatus.OK,
                 "field": "title",
                 "check_param": "a",
             },
@@ -78,13 +79,13 @@ async def test_one_film(
         (
             {"sort": "-title.raw"},
             {
-                "status": 200,
+                "status": HTTPStatus.OK,
                 "field": "title",
                 "check_param": "s",
             },
         ),
-        ({"sort": "not valid field"}, {"status": 422}),
-        ({}, {"status": 200}),
+        ({"sort": "not valid field"}, {"status": HTTPStatus.UNPROCESSABLE_ENTITY}),
+        ({}, {"status": HTTPStatus.OK}),
     ],
 )
 @pytest.mark.asyncio
@@ -108,7 +109,7 @@ async def test_sorted(
     es_body, es_status = es_response
 
     assert es_status == expected_answer.get("status")
-    if es_status == 200:
+    if es_status == HTTPStatus.OK:
         await es_delete_data(module="genres")
         rd_response = await make_get_request(path, query_data)
         rd_body, rd_status = rd_response
@@ -128,10 +129,10 @@ async def test_sorted(
     [
         (
             {"genre": id_good_1},
-            {"status": 200, "length": 3, "genre": genres_data},
+            {"status": HTTPStatus.OK, "length": 3, "genre": genres_data},
         ),
-        ({"genre": id_bad}, {"status": 404}),
-        ({"genre": id_invalid}, {"status": 422}),
+        ({"genre": id_bad}, {"status": HTTPStatus.NOT_FOUND}),
+        ({"genre": id_invalid}, {"status": HTTPStatus.UNPROCESSABLE_ENTITY}),
     ],
 )
 @pytest.mark.asyncio
@@ -141,7 +142,7 @@ async def test_filtered(
     template = [{"uuid": id} for id in ids[:10]]
     for id in template:
         id.update(es_films_data_1)
-    if expected_answer.get("status") == 200:
+    if expected_answer.get("status") == HTTPStatus.OK:
         for doc in template[: expected_answer.get("length")]:
             doc["genre"] = genres_data
     await es_write_data(template, module="films")
@@ -152,7 +153,7 @@ async def test_filtered(
     es_body, es_status = es_response
 
     assert es_status == expected_answer.get("status")
-    if es_status == 200:
+    if es_status == HTTPStatus.OK:
         await es_delete_data(module="genres")
         rd_response = await make_get_request(path, query_data)
         rd_body, rd_status = rd_response
@@ -170,47 +171,47 @@ async def test_filtered(
     [
         (
             {"page_number": 2, "page_size": 4},
-            {"status": 200, "length": 4},
+            {"status": HTTPStatus.OK, "length": 4},
         ),
         (
             {"page_number": 3, "page_size": 4},
-            {"status": 200, "length": 2},
+            {"status": HTTPStatus.OK, "length": 2},
         ),
         (
             {"page_number": 4, "page_size": 2},
-            {"status": 200, "length": 2},
+            {"status": HTTPStatus.OK, "length": 2},
         ),
         (
             {"page_number": 0, "page_size": 2},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": 2, "page_size": 0},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": -1, "page_size": 2},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": 1, "page_size": -1},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": 101, "page_size": 2},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": 2, "page_size": 101},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": "not int value", "page_size": 2},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": 5, "page_size": "not int value"},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
     ],
 )
@@ -229,7 +230,7 @@ async def test_paginated(
     es_body, es_status = es_response
 
     assert es_status == expected_answer.get("status")
-    if es_status == 200:
+    if es_status == HTTPStatus.OK:
         await es_delete_data(module="genres")
         rd_response = await make_get_request(path, query_data)
         rd_body, rd_status = rd_response
@@ -251,10 +252,10 @@ async def test_paginated(
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"query": "The Star"}, {"status": 200, "length": 5}),
-        ({"query": "star"}, {"status": 200, "length": 5}),
-        ({"query": "magedDon"}, {"status": 200, "length": 5}),
-        ({"query": "Mashed potato"}, {"status": 404}),
+        ({"query": "The Star"}, {"status": HTTPStatus.OK, "length": 5}),
+        ({"query": "star"}, {"status": HTTPStatus.OK, "length": 5}),
+        ({"query": "magedDon"}, {"status": HTTPStatus.OK, "length": 5}),
+        ({"query": "Mashed potato"}, {"status": HTTPStatus.NOT_FOUND}),
     ],
 )
 @pytest.mark.asyncio
@@ -273,7 +274,7 @@ async def test_search(
     es_body, es_status = es_response
 
     assert es_status == expected_answer.get("status")
-    if es_status == 200:
+    if es_status == HTTPStatus.OK:
         await es_delete_data(module="genres")
         rd_response = await make_get_request(path, query_data)
         rd_body, rd_status = rd_response

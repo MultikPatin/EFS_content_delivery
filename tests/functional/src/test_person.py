@@ -1,4 +1,5 @@
 import pytest
+from http import HTTPStatus
 
 from tests.functional.testdata.persons_data import (
     es_persons_data_1,
@@ -19,11 +20,11 @@ from tests.functional.testdata.base_data import (
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"person_id": id_good_1}, {"status": 200, "length": 2, "uuid": id_good_1, "films": person_re_1}),
-        ({"person_id": id_good_2}, {"status": 200, "length": 2, "uuid": id_good_2, "films": person_re_2}),
-        ({"person_id": id_bad}, {"status": 404}),
-        ({"person_id": id_invalid}, {"status": 422}),
-        ({"person_id": id_invalid_blank}, {"status": 404}),
+        ({"person_id": id_good_1}, {"status": HTTPStatus.OK, "length": 2, "uuid": id_good_1, "films": person_re_1}),
+        ({"person_id": id_good_2}, {"status": HTTPStatus.OK, "length": 2, "uuid": id_good_2, "films": person_re_2}),
+        ({"person_id": id_bad}, {"status": HTTPStatus.NOT_FOUND}),
+        ({"person_id": id_invalid}, {"status": HTTPStatus.UNPROCESSABLE_ENTITY}),
+        ({"person_id": id_invalid_blank}, {"status": HTTPStatus.NOT_FOUND}),
     ],
 )
 @pytest.mark.asyncio
@@ -44,7 +45,7 @@ async def test_person_films(
     es_body, es_status = es_response
 
     assert es_status == expected_answer.get("status")
-    if es_status == 200:
+    if es_status == HTTPStatus.OK:
         await es_delete_data(module="persons")
         rd_response = await make_get_request(path, query_data)
         rd_body, rd_status = rd_response
@@ -58,12 +59,12 @@ async def test_person_films(
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"query": "Antonio"}, {"status": 200, "length": 5}),
-        ({"query": "antonio banderas"}, {"status": 200, "length": 5}),
-        ({"query": "onio anDera"}, {"status": 200, "length": 5}),
-        ({"query": "pit"}, {"status": 200, "length": 5}),
-        ({"query": "onio"}, {"status": 404}),
-        ({"query": "Mashed potato"}, {"status": 404}),
+        ({"query": "Antonio"}, {"status": HTTPStatus.OK, "length": 5}),
+        ({"query": "antonio banderas"}, {"status": HTTPStatus.OK, "length": 5}),
+        ({"query": "onio anDera"}, {"status": HTTPStatus.OK, "length": 5}),
+        ({"query": "pit"}, {"status": HTTPStatus.OK, "length": 5}),
+        ({"query": "onio"}, {"status": HTTPStatus.NOT_FOUND}),
+        ({"query": "Mashed potato"}, {"status": HTTPStatus.NOT_FOUND}),
     ],
 )
 @pytest.mark.asyncio
@@ -82,7 +83,7 @@ async def test_search(
     es_body, es_status = es_response
 
     assert es_status == expected_answer.get("status")
-    if es_status == 200:
+    if es_status == HTTPStatus.OK:
         await es_delete_data(module="persons")
         rd_response = await make_get_request(path, query_data)
         rd_body, rd_status = rd_response
@@ -97,10 +98,10 @@ async def test_search(
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"person_id": id_good_1}, {"status": 200, "uuid": id_good_1}),
-        ({"person_id": id_bad}, {"status": 404}),
-        ({"person_id": id_invalid}, {"status": 422}),
-        ({"person_id": id_invalid_blank}, {"status": 404}),
+        ({"person_id": id_good_1}, {"status": HTTPStatus.OK, "uuid": id_good_1}),
+        ({"person_id": id_bad}, {"status": HTTPStatus.NOT_FOUND}),
+        ({"person_id": id_invalid}, {"status": HTTPStatus.UNPROCESSABLE_ENTITY}),
+        ({"person_id": id_invalid_blank}, {"status": HTTPStatus.NOT_FOUND}),
     ],
 )
 @pytest.mark.asyncio
@@ -116,7 +117,7 @@ async def test_one_person(make_get_request, es_write_data, es_delete_data, clear
     es_body, es_status = es_response
 
     assert es_status == expected_answer.get("status")
-    if es_status == 200:
+    if es_status == HTTPStatus.OK:
         await es_delete_data(module="persons")
         rd_response = await make_get_request(path)
         rd_body, rd_status = rd_response
