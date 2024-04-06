@@ -1,35 +1,29 @@
 import asyncio
-import time
 
 from elasticsearch import AsyncElasticsearch
-import elasticsearch.exceptions
 
 from tests.functional.settings import settings
 import backoff
 
 
 @backoff.on_exception(
-    wait_gen=backoff.expo,
-    exception=elasticsearch.exceptions.ConnectionError,
-    max_tries=10,
+    backoff.expo,
+    (ConnectionError,),
+    max_time=10,
 )
-async def ping_check(es_client: AsyncElasticsearch) -> None:
-    if not await es_client.ping():
-        print("==> Waiting for Elasticsearch")
-        raise elasticsearch.exceptions.ConnectionError
-    print("----------> Elasticsearch Ready")
-    await es_client.close()
-    # print("Waiting for Elasticsearch")
-    # if await es_client.ping():
-    #     print("Elasticsearch Ready")
-    #     await es_client.close()
-    #     break
-    # time.sleep(1)
+async def elastic_connect(client: AsyncElasticsearch):
+    if not await client.ping():
+        raise ConnectionError("Connection failed")
+
+
+async def main():
+    elastic = AsyncElasticsearch(hosts=settings.get_es_host, verify_certs=True)
+    print("==> Connecting to Elasticsearch ...")
+    try:
+        await elastic_connect(elastic)
+    finally:
+        await elastic.close()
 
 
 if __name__ == "__main__":
-    client = AsyncElasticsearch(hosts=settings.get_es_host, verify_certs=False)
-    asyncio.run(ping_check(client))
-    # ioloop = asyncio.get_event_loop()
-    # ioloop.run_until_complete(ping_check(client))
-    # ioloop.close()
+    asyncio.run(main())
