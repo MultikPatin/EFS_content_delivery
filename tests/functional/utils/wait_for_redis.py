@@ -1,19 +1,23 @@
 import asyncio
-import time
 
 from redis.asyncio import Redis
 
 from tests.functional.settings import settings
 
+import backoff
+import redis.exceptions
 
+
+@backoff.on_exception(
+    wait_gen=backoff.expo,
+    exception=redis.exceptions.ConnectionError,
+)
 async def ping_check(redis_client: Redis) -> None:
-    while True:
-        print("Waiting for Redis")
-        if await redis_client.ping():
-            print("Redis Ready")
-            await redis_client.aclose()
-            break
-        time.sleep(1)
+    if not await redis_client.ping():
+        print("==> Waiting for Redis")
+        raise redis.exceptions.ConnectionError
+    print("----------> Redis Ready")
+    await redis_client.aclose()
 
 
 if __name__ == "__main__":
