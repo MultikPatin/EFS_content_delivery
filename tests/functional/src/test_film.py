@@ -27,7 +27,12 @@ import string
 )
 @pytest.mark.asyncio
 async def test_one_film(
-    make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer
+    make_get_request,
+    es_write_data,
+    es_delete_data,
+    clear_cache,
+    query_data,
+    expected_answer,
 ):
     template = [{"uuid": id_good_1}]
     template[0].update(es_films_data_1)
@@ -84,15 +89,22 @@ async def test_one_film(
                 "check_param": "s",
             },
         ),
-        ({"sort": "not valid field"}, {"status": HTTPStatus.UNPROCESSABLE_ENTITY}),
+        (
+            {"sort": "not valid field"},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
+        ),
         ({}, {"status": HTTPStatus.OK}),
     ],
 )
 @pytest.mark.asyncio
 async def test_sorted(
-    make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer
+    make_get_request,
+    es_write_data,
+    es_delete_data,
+    clear_cache,
+    query_data,
+    expected_answer,
 ):
-
     template = [{"uuid": id} for id in ids[:10]]
     for id in template:
         id.update(es_films_data_1)
@@ -119,9 +131,9 @@ async def test_sorted(
         assert len(es_body) == len(template)
         for doc in es_body:
             assert doc.get("uuid") in ids
-        assert es_body[0].get(expected_answer.get("field")) == expected_answer.get(
-            "check_param"
-        )
+        assert es_body[0].get(
+            expected_answer.get("field")
+        ) == expected_answer.get("check_param")
 
 
 @pytest.mark.parametrize(
@@ -137,7 +149,12 @@ async def test_sorted(
 )
 @pytest.mark.asyncio
 async def test_filtered(
-    make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer
+    make_get_request,
+    es_write_data,
+    es_delete_data,
+    clear_cache,
+    query_data,
+    expected_answer,
 ):
     template = [{"uuid": id} for id in ids[:10]]
     for id in template:
@@ -217,7 +234,12 @@ async def test_filtered(
 )
 @pytest.mark.asyncio
 async def test_paginated(
-    make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer
+    make_get_request,
+    es_write_data,
+    es_delete_data,
+    clear_cache,
+    query_data,
+    expected_answer,
 ):
     template = [{"uuid": id} for id in ids[:10]]
     for id in template:
@@ -244,9 +266,9 @@ async def test_paginated(
             )
             stop = query_data.get("page_number") * query_data.get("page_size")
 
-            assert template[start:stop][index].get("uuid") == es_body[index].get(
-                "uuid"
-            )
+            assert template[start:stop][index].get("uuid") == es_body[
+                index
+            ].get("uuid")
 
 
 @pytest.mark.parametrize(
@@ -260,7 +282,12 @@ async def test_paginated(
 )
 @pytest.mark.asyncio
 async def test_search(
-    make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer
+    make_get_request,
+    es_write_data,
+    es_delete_data,
+    clear_cache,
+    query_data,
+    expected_answer,
 ):
     template = [{"uuid": id} for id in ids[:10]]
     for id_1, id_2 in zip(template[:5], template[5:]):

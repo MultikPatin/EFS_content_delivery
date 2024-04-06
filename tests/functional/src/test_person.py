@@ -20,16 +20,40 @@ from tests.functional.testdata.base_data import (
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"person_id": id_good_1}, {"status": HTTPStatus.OK, "length": 2, "uuid": id_good_1, "films": person_re_1}),
-        ({"person_id": id_good_2}, {"status": HTTPStatus.OK, "length": 2, "uuid": id_good_2, "films": person_re_2}),
+        (
+            {"person_id": id_good_1},
+            {
+                "status": HTTPStatus.OK,
+                "length": 2,
+                "uuid": id_good_1,
+                "films": person_re_1,
+            },
+        ),
+        (
+            {"person_id": id_good_2},
+            {
+                "status": HTTPStatus.OK,
+                "length": 2,
+                "uuid": id_good_2,
+                "films": person_re_2,
+            },
+        ),
         ({"person_id": id_bad}, {"status": HTTPStatus.NOT_FOUND}),
-        ({"person_id": id_invalid}, {"status": HTTPStatus.UNPROCESSABLE_ENTITY}),
+        (
+            {"person_id": id_invalid},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
+        ),
         ({"person_id": id_invalid_blank}, {"status": HTTPStatus.NOT_FOUND}),
     ],
 )
 @pytest.mark.asyncio
 async def test_person_films(
-    make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer
+    make_get_request,
+    es_write_data,
+    es_delete_data,
+    clear_cache,
+    query_data,
+    expected_answer,
 ):
     template = [{"uuid": id} for id in ids[:10]]
     template[0] = {"uuid": id_good_1}
@@ -69,7 +93,12 @@ async def test_person_films(
 )
 @pytest.mark.asyncio
 async def test_search(
-    make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer
+    make_get_request,
+    es_write_data,
+    es_delete_data,
+    clear_cache,
+    query_data,
+    expected_answer,
 ):
     template = [{"uuid": id} for id in ids[:10]]
     for id_1, id_2 in zip(template[:5], template[5:]):
@@ -94,18 +123,30 @@ async def test_search(
             assert doc.get("uuid") in ids
 
 
-
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"person_id": id_good_1}, {"status": HTTPStatus.OK, "uuid": id_good_1}),
+        (
+            {"person_id": id_good_1},
+            {"status": HTTPStatus.OK, "uuid": id_good_1},
+        ),
         ({"person_id": id_bad}, {"status": HTTPStatus.NOT_FOUND}),
-        ({"person_id": id_invalid}, {"status": HTTPStatus.UNPROCESSABLE_ENTITY}),
+        (
+            {"person_id": id_invalid},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
+        ),
         ({"person_id": id_invalid_blank}, {"status": HTTPStatus.NOT_FOUND}),
     ],
 )
 @pytest.mark.asyncio
-async def test_one_person(make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer):
+async def test_one_person(
+    make_get_request,
+    es_write_data,
+    es_delete_data,
+    clear_cache,
+    query_data,
+    expected_answer,
+):
     await clear_cache()
     template = [{"uuid": id_good_1}]
     template[0].update(es_persons_data_1)

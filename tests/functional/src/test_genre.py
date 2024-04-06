@@ -14,7 +14,14 @@ from tests.functional.testdata.genres_data import es_genres_data
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"genre_id": id_good_1}, {"status": HTTPStatus.OK, "uuid": id_good_1, "keys": ["uuid", "name"]}),
+        (
+            {"genre_id": id_good_1},
+            {
+                "status": HTTPStatus.OK,
+                "uuid": id_good_1,
+                "keys": ["uuid", "name"],
+            },
+        ),
         ({"genre_id": id_bad}, {"status": HTTPStatus.NOT_FOUND}),
         ({"genre_id": id_invalid}, {"status": HTTPStatus.UNPROCESSABLE_ENTITY}),
     ],
@@ -104,7 +111,12 @@ async def test_one_genre(
 )
 @pytest.mark.asyncio
 async def test_paginated(
-    make_get_request, es_write_data, es_delete_data, clear_cache, query_data, expected_answer
+    make_get_request,
+    es_write_data,
+    es_delete_data,
+    clear_cache,
+    query_data,
+    expected_answer,
 ):
     template = [{"uuid": id} for id in ids[:10]]
     for id in template:
@@ -131,6 +143,6 @@ async def test_paginated(
             )
             stop = query_data.get("page_number") * query_data.get("page_size")
 
-            assert template[start:stop][index].get("uuid") == es_body[index].get(
-                "uuid"
-            )
+            assert template[start:stop][index].get("uuid") == es_body[
+                index
+            ].get("uuid")

@@ -9,6 +9,7 @@ from tests.functional.settings import settings
 from redis.asyncio import Redis
 import aiohttp
 
+
 @pytest.fixture(scope="session")
 def event_loop():
     loop = asyncio.get_event_loop()
