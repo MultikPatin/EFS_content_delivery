@@ -27,6 +27,7 @@ api = [
 test = [
     "elasticsearch",
     "redis",
+    "backoff"
 ]
 
 [tool.poetry.group.dev]

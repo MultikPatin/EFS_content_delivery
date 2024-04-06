@@ -1,27 +1,29 @@
 import asyncio
-import time
 
 from redis.asyncio import Redis
 
 from tests.functional.settings import settings
+import backoff
 
 
-async def ping_check(redis_client: Redis) -> None:
-    while True:
-        print("Waiting for Redis")
-        if await redis_client.ping():
-            print("Redis Ready")
-            await redis_client.aclose()
-            break
-        time.sleep(1)
+@backoff.on_exception(
+    backoff.expo,
+    (ConnectionError,),
+    max_time=10,
+)
+async def elastic_connect(client: Redis):
+    if not await client.ping():
+        raise ConnectionError("Connection to Redis failed")
+
+
+async def main():
+    redis = Redis(**settings.get_redis_host)
+    print("==> Connecting to Redis ...")
+    try:
+        await elastic_connect(redis)
+    finally:
+        await redis.close()
 
 
 if __name__ == "__main__":
-    client = Redis(**settings.get_redis_host)
-
-    ioloop = asyncio.get_event_loop()
-    tasks = [
-        ioloop.create_task(ping_check(client)),
-    ]
-    ioloop.run_until_complete(asyncio.wait(tasks))
-    ioloop.close()
+    asyncio.run(main())

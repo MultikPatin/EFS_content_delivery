@@ -20,12 +20,16 @@ class PersonService(BaseElasticService[PersonDB]):
         )
 
     async def get_search(
-        self, page_number: int, page_size: int, query: str | None, field: str
+        self,
+        page_number: int,
+        page_size: int,
+        search_query: str | None,
+        field: str,
     ) -> list[PersonDB] | None:
         return await self._get_search(
             page_number=page_number,
             page_size=page_size,
-            query=query,
+            search_query=search_query,
             field=field,
             model=PersonDB,
         )

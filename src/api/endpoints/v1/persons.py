@@ -6,15 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 
 from src.api.core.utils import (
     build_films_field,
-    page_number_query,
-    page_size_query,
-    search_query,
 )
 from src.api.models.api.v1.person import (
     FilmForFilms,
     Person,
 )
 from src.api.services.person import PersonService, get_person_service
+from src.api.validators.pagination import PaginatedParams, get_paginated_params
+from src.api.validators.search import search_query_validators
 
 router = APIRouter()
 
@@ -23,9 +22,10 @@ router = APIRouter()
     "/{person_id}", response_model=Person, summary="Get the details of a person"
 )
 async def person_details(
-    person_id: Annotated[
+    person_uuid: Annotated[
         UUID,
         Path(
+            alias="person_id",
             title="person id",
             description="The UUID of the person to get",
             example="b445a536-338c-4e7a-a79d-8f9c2e41ca85",
@@ -44,7 +44,7 @@ async def person_details(
     Raises:
         HTTPException: If the person is not found.
     """
-    person = await person_service.get_by_id(person_id)
+    person = await person_service.get_by_id(person_uuid)
     if not person:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="person not found"
@@ -62,18 +62,13 @@ async def person_details(
     summary="Get a list of persons based on a search query",
 )
 async def persons_search_by_full_name(
-    page_number: Annotated[
-        int,
-        page_number_query,
-    ] = 1,
-    page_size: Annotated[
-        int,
-        page_size_query,
-    ] = 50,
-    query: Annotated[
+    page_number: int = 1,
+    page_size: int = 50,
+    search_query: Annotated[
         str | None,
-        search_query,
+        search_query_validators,
     ] = "",
+    paginated_params: PaginatedParams = Depends(get_paginated_params),
     person_service: PersonService = Depends(get_person_service),
 ) -> list[Person]:
     """Get a list of persons based on a search query
@@ -90,8 +85,9 @@ async def persons_search_by_full_name(
         HTTPException: If the persons are not found.
     """
     field = "full_name"
+    paginated_params.validate(page_number, page_size)
     persons = await person_service.get_search(
-        page_number, page_size, query, field
+        **paginated_params.get(), search_query=search_query, field=field
     )
     if not persons:
         raise HTTPException(
@@ -113,9 +109,10 @@ async def persons_search_by_full_name(
     summary="Get a list of films for a specific person",
 )
 async def person_details_films(
-    person_id: Annotated[
+    person_uuid: Annotated[
         UUID,
         Path(
+            alias="person_id",
             title="person id",
             description="The UUID of the person to get",
             example="b445a536-338c-4e7a-a79d-8f9c2e41ca85",
@@ -134,7 +131,7 @@ async def person_details_films(
     Raises:
         HTTPException: If the films are not found.
     """
-    films = await person_service.get_person_films(person_id)
+    films = await person_service.get_person_films(person_uuid)
     if not films:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="films not found"
