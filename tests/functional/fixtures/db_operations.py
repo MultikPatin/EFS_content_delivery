@@ -9,7 +9,6 @@ from tests.functional.settings import settings
 from redis.asyncio import Redis
 
 
-
 def get_es_bulk_query(data, index, id):
     bulk_query = []
     for row in data:

@@ -40,12 +40,12 @@ class BaseElasticService(Generic[ModelDB]):
         self,
         page_number: int,
         page_size: int,
-        query: str | None,
+        search_query: str | None,
         field: str,
         model: type[ModelDB],
     ) -> list[ModelDB] | None:
         key = self._cache.build_key(
-            self._key_prefix, page_number, page_size, query
+            self._key_prefix, page_number, page_size, search_query
         )
         persons = await self._cache.get_list_model(key, model)
         if not persons:
@@ -53,7 +53,7 @@ class BaseElasticService(Generic[ModelDB]):
                 page_number=page_number,
                 page_size=page_size,
                 field=field,
-                query=query,
+                query=search_query,
                 model=model,
                 index=self._index,
             )

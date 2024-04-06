@@ -60,7 +60,7 @@ class TestSettings(BaseSettings):
     @property
     def get_api_host(self) -> str:
         if self.local == "True":
-            return "http://127.0.0.1"
+            return f"http://127.0.0.1:{self.api_port}"
         return f"http://{self.api_host}:{self.api_port}"
 
 
