@@ -1,4 +1,5 @@
 import pytest
+from http import HTTPStatus
 
 from tests.functional.testdata.base_data import (
     id_good_1,
@@ -13,9 +14,9 @@ from tests.functional.testdata.genres_data import es_genres_data
 @pytest.mark.parametrize(
     "query_data, expected_answer",
     [
-        ({"genre_id": id_good_1}, {"status": 200, "uuid": id_good_1, "keys": ["uuid", "name"]}),
-        ({"genre_id": id_bad}, {"status": 404}),
-        ({"genre_id": id_invalid}, {"status": 422}),
+        ({"genre_id": id_good_1}, {"status": HTTPStatus.OK, "uuid": id_good_1, "keys": ["uuid", "name"]}),
+        ({"genre_id": id_bad}, {"status": HTTPStatus.NOT_FOUND}),
+        ({"genre_id": id_invalid}, {"status": HTTPStatus.UNPROCESSABLE_ENTITY}),
     ],
 )
 @pytest.mark.asyncio
@@ -37,7 +38,7 @@ async def test_one_genre(
     es_body, es_status = es_response
 
     assert es_status == expected_answer.get("status")
-    if es_status == 200:
+    if es_status == HTTPStatus.OK:
         await es_delete_data(module="genres")
         rd_response = await make_get_request(path)
         rd_body, rd_status = rd_response
@@ -57,47 +58,47 @@ async def test_one_genre(
     [
         (
             {"page_number": 2, "page_size": 4},
-            {"status": 200, "length": 4},
+            {"status": HTTPStatus.OK, "length": 4},
         ),
         (
             {"page_number": 3, "page_size": 4},
-            {"status": 200, "length": 2},
+            {"status": HTTPStatus.OK, "length": 2},
         ),
         (
             {"page_number": 4, "page_size": 2},
-            {"status": 200, "length": 2},
+            {"status": HTTPStatus.OK, "length": 2},
         ),
         (
             {"page_number": 0, "page_size": 2},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": 2, "page_size": 0},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": -1, "page_size": 2},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": 1, "page_size": -1},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": 101, "page_size": 2},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": 2, "page_size": 101},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": "not int value", "page_size": 2},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
         (
             {"page_number": 5, "page_size": "not int value"},
-            {"status": 422},
+            {"status": HTTPStatus.UNPROCESSABLE_ENTITY},
         ),
     ],
 )
@@ -116,7 +117,7 @@ async def test_paginated(
     es_body, es_status = es_response
 
     assert es_status == expected_answer.get("status")
-    if es_status == 200:
+    if es_status == HTTPStatus.OK:
         await es_delete_data(module="genres")
         rd_response = await make_get_request(path, query_data)
         rd_body, rd_status = rd_response
