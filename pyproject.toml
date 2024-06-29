@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "async-api-sprint-2"
-version = "0.1.0"
+name = "content-service"
+version = "1.0.0"
 description = ""
 authors = ["Dmitry Patin <multik.patin@yandex.ru>"]
 readme = "README.md"
@@ -36,7 +36,7 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.1.11"
 pre-commit = "^3.6.2"
-mypy = "^1.9.0"
+mypy = "^1.10.1"
 
 [tool.poetry.group.test]
 optional = true
@@ -50,7 +50,7 @@ aiohttp = "^3.9.3"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.ruff]
+[tool.lint]
 select = [
     "E", # pycodestyle errors
     "W", # pycodestyle warnings
@@ -78,6 +78,7 @@ exclude = [
     ".git",
     ".git-rewrite",
     ".hg",
+    ".sh",
     ".mypy_cache",
     ".nox",
     ".pants.d",
@@ -94,17 +95,11 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
-    "*/settings.py",
-    "*/migrations/",
-    "*/config/components/",
-    "tasks",
+#    "migrations",
 ]
 per-file-ignores = { }
-
 line-length = 80
-
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-
 target-version = "py311"
 
 [tool.ruff.format]
@@ -113,57 +108,18 @@ docstring-code-line-length = 60
 
 [tool.mypy]
 python_version = "3.11"
-exclude = [
-    '.bzr',
-    '.direnv',
-    '.eggs',
-    '.git',
-    '.git-rewrite',
-    '.hg',
-    '.mypy_cache',
-    '.nox',
-    '.pants.d',
-    '.pytype',
-    '.ruff_cache',
-    '.svn',
-    '.tox',
-    '.venv',
-    '__pypackages__',
-    '_build',
-    'buck-out',
-    'build',
-    'tests',
-    'dist',
-    'node_modules',
-    'venv',
-    '*/settings.py',
-    '*/migrations/',
-    'tasks',
-]
-plugins = [
-  "pydantic.mypy"
-]
-
-warn_return_any = true
-warn_unused_configs = true
+plugins = ["pydantic.mypy"]
+follow_imports = "silent"
 warn_redundant_casts = true
 warn_unused_ignores = true
-warn_unreachable = true
-
-follow_imports = "silent"
-show_error_codes = true
-
-check_untyped_defs = true
-
-no_implicit_reexport = true
-no_implicit_optional = true
-
-# for strict mypy: (this is the tricky one :-))
-disallow_untyped_defs = true
 disallow_any_generics = true
-disallow_any_unimported = true
-
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_required_dynamic_aliases = true
+check_untyped_defs = true
+explicit_package_bases = true
+no_implicit_reexport = true
+ignore_missing_imports = true
+exclude = [
+    "docs",
+    "migrations",
+    "tests",
+    "static"
+]
